@@ -356,3 +356,31 @@ FINAL_VAR("result")
 - Official Python Implementation: [github.com/alexzhang13/rlm](https://github.com/alexzhang13/rlm)
 - Minimal Implementation: [github.com/alexzhang13/rlm-minimal](https://github.com/alexzhang13/rlm-minimal)
 - Author's Blog: [alexzhang13.github.io/blog/2025/rlm](https://alexzhang13.github.io/blog/2025/rlm/)
+
+---
+
+## Phase 7: Multi-Provider Model Updates (January 2026)
+
+### 7.1 Add Google Gemini Support
+- [x] Add Google Gemini models (Gemini 3 Pro, 3 Flash, 2.5 Pro, 2.5 Flash, 2.0 Flash)
+- [x] Create `src/clients/google.ts` using `@google/genai` SDK
+- [x] Add `google` provider to `ModelProvider` type
+- [x] Implement streaming support for Gemini
+- [x] Add pricing for all Gemini models
+
+### 7.2 Update OpenAI Models
+- [x] Add GPT-4.1 series (gpt-4.1, gpt-4.1-mini, gpt-4.1-nano)
+- [x] Add o3 reasoning models (o3, o3-mini, o3-pro)
+- [x] Add o1 models (o1, o1-mini, o1-pro)
+- [x] Update pricing for all OpenAI models
+
+### 7.3 Update Anthropic Models
+- [x] Add Claude 4.5 series (claude-sonnet-4-5, claude-haiku-4-5, claude-opus-4-5)
+- [x] Add Claude 4 legacy models (claude-sonnet-4, claude-opus-4, claude-opus-4-1)
+- [x] Update pricing for all Claude models
+- [x] Deprecate old Claude 3.x models
+
+### 7.4 Documentation Updates
+- [x] Update README.md with all supported models
+- [x] Add model comparison table
+- [x] Update installation instructions for new dependencies

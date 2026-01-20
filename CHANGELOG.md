@@ -97,11 +97,47 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `@anthropic-ai/sdk` ^0.39.0 - Anthropic API client
 - `zod` ^3.24.1 - Schema validation
 
+## [0.2.0] - 2026-01-20
+
+### Added
+
+#### Google Gemini Support
+- New `GoogleClient` for Google Gemini models
+- Supported models: Gemini 3 Pro/Flash (preview), Gemini 2.5 Pro/Flash/Flash-Lite, Gemini 2.0 Flash/Flash-Lite
+- `GOOGLE_API_KEY` or `GEMINI_API_KEY` environment variable support
+- Full streaming support for Gemini models
+- Model pricing for all Gemini variants
+
+#### OpenAI Model Updates (January 2026)
+- **GPT-5 Series**: `gpt-5`, `gpt-5-mini`, `gpt-5.1`, `gpt-5.2` - Latest flagship reasoning models
+- **GPT-4.1 Series**: `gpt-4.1`, `gpt-4.1-mini`, `gpt-4.1-nano`
+- **o3 Reasoning Models**: `o3`, `o3-mini`, `o3-pro`
+- **o1 Reasoning Models**: `o1`, `o1-mini`, `o1-pro`
+
+#### Anthropic Model Updates (January 2026)
+- **Claude 4.5 Series**: `claude-sonnet-4-5`, `claude-haiku-4-5`, `claude-opus-4-5` - Current flagship
+- **Versioned aliases**: `claude-sonnet-4-5-20250929`, `claude-haiku-4-5-20251001`, `claude-opus-4-5-20251101`
+- **Claude 4 Legacy**: `claude-sonnet-4`, `claude-opus-4`, `claude-opus-4-1`
+- Deprecated Claude 3.x models still available for backwards compatibility
+
+#### Advanced Features (from Phase 6)
+- **Caching Layer**: LRU cache with configurable TTL, max entries, and max size
+- **Batch Processing**: Process multiple queries in parallel with configurable concurrency
+- **Progress Callbacks**: Event-based progress tracking with webhook support
+- **Progress Bar**: CLI helper for displaying execution progress
+
+### Changed
+- Updated `ModelProvider` type to include `'google'`
+- Updated `detectProvider()` to detect Gemini models
+- Updated model pricing for all providers (January 2026 rates)
+- README documentation with comprehensive model tables
+
+### Dependencies
+- Added `@google/genai` ^1.0.0 for Gemini API support
+
 ## [Unreleased]
 
 ### Planned
-- Caching layer for repeated queries
-- Batch processing support
-- Progress callbacks and webhooks
-- Additional model providers
 - Performance benchmarks
+- Additional examples for new models
+- Extended thinking mode support for Claude 4.5

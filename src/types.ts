@@ -4,11 +4,68 @@ import { z } from 'zod';
 // LLM Client Types
 // =============================================================================
 
-export type ModelProvider = 'openai' | 'anthropic';
+export type ModelProvider = 'openai' | 'anthropic' | 'google';
 
-export type OpenAIModel = 'gpt-4o' | 'gpt-4o-mini' | 'gpt-4-turbo' | 'gpt-3.5-turbo';
-export type AnthropicModel = 'claude-3-5-sonnet-latest' | 'claude-3-5-haiku-latest' | 'claude-3-opus-latest';
-export type SupportedModel = OpenAIModel | AnthropicModel;
+// OpenAI Models (January 2026)
+export type OpenAIModel =
+  // GPT-5 Series (latest flagship reasoning models)
+  | 'gpt-5'
+  | 'gpt-5-mini'
+  | 'gpt-5.1'
+  | 'gpt-5.2'
+  // GPT-4.1 Series
+  | 'gpt-4.1'
+  | 'gpt-4.1-mini'
+  | 'gpt-4.1-nano'
+  // GPT-4o Series
+  | 'gpt-4o'
+  | 'gpt-4o-mini'
+  // o3 Reasoning Models
+  | 'o3'
+  | 'o3-mini'
+  | 'o3-pro'
+  // o1 Reasoning Models
+  | 'o1'
+  | 'o1-mini'
+  | 'o1-pro'
+  // Legacy models
+  | 'gpt-4-turbo'
+  | 'gpt-3.5-turbo';
+
+// Anthropic Models (January 2026)
+export type AnthropicModel =
+  // Claude 4.5 Series (current flagship)
+  | 'claude-sonnet-4-5'
+  | 'claude-haiku-4-5'
+  | 'claude-opus-4-5'
+  // Versioned aliases
+  | 'claude-sonnet-4-5-20250929'
+  | 'claude-haiku-4-5-20251001'
+  | 'claude-opus-4-5-20251101'
+  // Claude 4 Legacy
+  | 'claude-sonnet-4'
+  | 'claude-opus-4'
+  | 'claude-opus-4-1'
+  // Legacy 3.x (deprecated but still available)
+  | 'claude-3-5-sonnet-latest'
+  | 'claude-3-5-haiku-latest'
+  | 'claude-3-opus-latest'
+  | 'claude-3-haiku-20240307';
+
+// Google Gemini Models (January 2026)
+export type GoogleModel =
+  // Gemini 3 Series (preview)
+  | 'gemini-3-pro-preview'
+  | 'gemini-3-flash-preview'
+  // Gemini 2.5 Series (production)
+  | 'gemini-2.5-pro'
+  | 'gemini-2.5-flash'
+  | 'gemini-2.5-flash-lite'
+  // Gemini 2.0 Series
+  | 'gemini-2.0-flash'
+  | 'gemini-2.0-flash-lite';
+
+export type SupportedModel = OpenAIModel | AnthropicModel | GoogleModel;
 
 export interface Message {
   role: 'system' | 'user' | 'assistant';

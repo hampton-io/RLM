@@ -7,7 +7,7 @@ RLM enables LLMs to process **arbitrarily long contexts** by treating them as an
 ## Features
 
 - **Unlimited Context Length**: Process documents far larger than any model's context window
-- **Multi-Provider Support**: Works with OpenAI (GPT-4o, GPT-4o-mini) and Anthropic (Claude 3.5)
+- **Multi-Provider Support**: Works with OpenAI (GPT-5, GPT-4o, o3, o1), Anthropic (Claude 4.5), and Google (Gemini 3, 2.5)
 - **Streaming Support**: Real-time progress updates during execution
 - **Secure Sandbox**: Code execution in isolated VM environment
 - **Recursive Sub-Queries**: LLM can spawn sub-calls to itself over context chunks
@@ -67,8 +67,11 @@ npx tsx src/cli.ts "Summarize this document" -f document.txt
 # Pipe context from another command
 cat large_file.txt | npx tsx src/cli.ts "Find all email addresses" --stdin
 
-# Use Claude with streaming
-npx tsx src/cli.ts "Analyze this" -f data.txt -m claude-3-5-sonnet-latest --stream
+# Use Claude 4.5 with streaming
+npx tsx src/cli.ts "Analyze this" -f data.txt -m claude-sonnet-4-5 --stream
+
+# Use Gemini 2.5 Flash
+npx tsx src/cli.ts "Summarize" -f data.txt -m gemini-2.5-flash
 ```
 
 ### CLI Options
@@ -195,10 +198,23 @@ for await (const event of rlm.stream(query, context)) {
 
 ### Supported Models
 
-| Provider | Models |
-|----------|--------|
-| OpenAI | `gpt-4o`, `gpt-4o-mini`, `gpt-4-turbo`, `gpt-3.5-turbo` |
-| Anthropic | `claude-3-5-sonnet-latest`, `claude-3-5-haiku-latest`, `claude-3-opus-latest` |
+| Provider | Models | Description |
+|----------|--------|-------------|
+| **OpenAI** | | |
+| | `gpt-5`, `gpt-5-mini`, `gpt-5.1`, `gpt-5.2` | GPT-5 Series - Latest flagship reasoning models |
+| | `gpt-4.1`, `gpt-4.1-mini`, `gpt-4.1-nano` | GPT-4.1 Series |
+| | `gpt-4o`, `gpt-4o-mini` | GPT-4o Series |
+| | `o3`, `o3-mini`, `o3-pro` | o3 Reasoning Models |
+| | `o1`, `o1-mini`, `o1-pro` | o1 Reasoning Models |
+| | `gpt-4-turbo`, `gpt-3.5-turbo` | Legacy models |
+| **Anthropic** | | |
+| | `claude-sonnet-4-5`, `claude-haiku-4-5`, `claude-opus-4-5` | Claude 4.5 Series - Current flagship |
+| | `claude-sonnet-4`, `claude-opus-4`, `claude-opus-4-1` | Claude 4 Series (legacy) |
+| | `claude-3-5-sonnet-latest`, `claude-3-5-haiku-latest`, `claude-3-opus-latest` | Claude 3.x (deprecated) |
+| **Google** | | |
+| | `gemini-3-pro-preview`, `gemini-3-flash-preview` | Gemini 3 Series (preview) |
+| | `gemini-2.5-pro`, `gemini-2.5-flash`, `gemini-2.5-flash-lite` | Gemini 2.5 Series (production) |
+| | `gemini-2.0-flash`, `gemini-2.0-flash-lite` | Gemini 2.0 Series |
 
 ## Advanced Usage
 
@@ -283,9 +299,10 @@ reporter.exportSession({
 ## Environment Variables
 
 ```bash
-# Required: At least one API key
+# Required: At least one API key for your chosen provider
 OPENAI_API_KEY=sk-...
 ANTHROPIC_API_KEY=sk-ant-...
+GOOGLE_API_KEY=...             # or GEMINI_API_KEY
 
 # Optional configuration
 RLM_MODEL=gpt-4o-mini          # Default model
@@ -399,7 +416,8 @@ npm run format
 |         v                v                   v              |
 |  +-------------+  +-------------+  +---------------------+  |
 |  |   Logger    |  |  Sandbox    |  |  Model Adapters     |  |
-|  |  (Traces)   |  |  (VM)       |  |  (OpenAI, Anthropic)|  |
+|  |  (Traces)   |  |  (VM)       |  | (OpenAI, Anthropic, |  |
+|  |             |  |             |  |  Google Gemini)     |  |
 |  +-------------+  +-------------+  +---------------------+  |
 +-------------------------------------------------------------+
 ```

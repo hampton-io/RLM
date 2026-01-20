@@ -1,6 +1,6 @@
 {
   "name": "rlm",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Recursive Language Models - Node.js implementation for processing arbitrarily long contexts",
   "type": "module",
   "main": "dist/index.js",
@@ -36,12 +36,18 @@
     "language-model",
     "long-context",
     "openai",
-    "anthropic"
+    "anthropic",
+    "google",
+    "gemini",
+    "gpt-5",
+    "claude",
+    "ai"
   ],
   "author": "",
   "license": "MIT",
   "dependencies": {
     "@anthropic-ai/sdk": "^0.39.0",
+    "@google/genai": "^1.0.0",
     "openai": "^4.77.0",
     "zod": "^3.24.1"
   },

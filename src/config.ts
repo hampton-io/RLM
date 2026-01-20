@@ -1,4 +1,4 @@
-import type { RLMOptions, SupportedModel } from './types.js';
+import type { RLMOptions, SupportedModel, ModelProvider } from './types.js';
 import { detectProvider } from './clients/types.js';
 import { invalidConfigError } from './utils/errors.js';
 
@@ -22,6 +22,8 @@ export const DEFAULT_CONFIG = {
 export const ENV_VARS = {
   OPENAI_API_KEY: 'OPENAI_API_KEY',
   ANTHROPIC_API_KEY: 'ANTHROPIC_API_KEY',
+  GOOGLE_API_KEY: 'GOOGLE_API_KEY',
+  GEMINI_API_KEY: 'GEMINI_API_KEY',
   RLM_DEFAULT_MODEL: 'RLM_DEFAULT_MODEL',
   RLM_VERBOSE: 'RLM_VERBOSE',
   RLM_MAX_ITERATIONS: 'RLM_MAX_ITERATIONS',
@@ -46,7 +48,7 @@ export interface RLMConfigOptions extends RLMOptions {
  */
 export interface ResolvedConfig {
   model: SupportedModel;
-  provider: 'openai' | 'anthropic';
+  provider: ModelProvider;
   apiKey: string;
   maxIterations: number;
   maxDepth: number;
@@ -116,13 +118,34 @@ export function loadEnvConfig(): Partial<RLMConfigOptions> {
 /**
  * Get the API key for a provider.
  */
-export function getApiKey(provider: 'openai' | 'anthropic', explicitKey?: string): string {
+export function getApiKey(provider: ModelProvider, explicitKey?: string): string {
   if (explicitKey) {
     return explicitKey;
   }
 
-  const envVar = provider === 'openai' ? ENV_VARS.OPENAI_API_KEY : ENV_VARS.ANTHROPIC_API_KEY;
-  const key = process.env[envVar];
+  let envVar: string;
+  let key: string | undefined;
+
+  switch (provider) {
+    case 'openai':
+      envVar = ENV_VARS.OPENAI_API_KEY;
+      key = process.env[envVar];
+      break;
+    case 'anthropic':
+      envVar = ENV_VARS.ANTHROPIC_API_KEY;
+      key = process.env[envVar];
+      break;
+    case 'google':
+      // Try GOOGLE_API_KEY first, then GEMINI_API_KEY
+      envVar = ENV_VARS.GOOGLE_API_KEY;
+      key = process.env[ENV_VARS.GOOGLE_API_KEY] || process.env[ENV_VARS.GEMINI_API_KEY];
+      if (!key) {
+        envVar = `${ENV_VARS.GOOGLE_API_KEY} or ${ENV_VARS.GEMINI_API_KEY}`;
+      }
+      break;
+    default:
+      throw invalidConfigError(`Unknown provider: ${provider}`);
+  }
 
   if (!key) {
     throw invalidConfigError(
@@ -194,10 +217,11 @@ export function resolveConfig(options: RLMConfigOptions): ResolvedConfig {
 /**
  * Check if we have valid credentials for at least one provider.
  */
-export function hasValidCredentials(): { openai: boolean; anthropic: boolean } {
+export function hasValidCredentials(): { openai: boolean; anthropic: boolean; google: boolean } {
   return {
     openai: !!process.env[ENV_VARS.OPENAI_API_KEY],
     anthropic: !!process.env[ENV_VARS.ANTHROPIC_API_KEY],
+    google: !!(process.env[ENV_VARS.GOOGLE_API_KEY] || process.env[ENV_VARS.GEMINI_API_KEY]),
   };
 }
 

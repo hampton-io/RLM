@@ -30,6 +30,7 @@ export type {
   SupportedModel,
   OpenAIModel,
   AnthropicModel,
+  GoogleModel,
   ModelProvider,
 
   // Message types

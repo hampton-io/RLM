@@ -52,19 +52,82 @@ export interface ModelPricing {
 }
 
 /**
- * Model pricing lookup table.
+ * Model pricing lookup table (January 2026).
+ * Prices are in USD per 1M tokens.
  */
 export const MODEL_PRICING: Record<string, ModelPricing> = {
-  // OpenAI models
+  // ==========================================================================
+  // OpenAI Models
+  // ==========================================================================
+
+  // GPT-5 Series (flagship reasoning models)
+  'gpt-5': { inputPer1M: 5, outputPer1M: 15 },
+  'gpt-5-mini': { inputPer1M: 1, outputPer1M: 4 },
+  'gpt-5.1': { inputPer1M: 5, outputPer1M: 15 },
+  'gpt-5.2': { inputPer1M: 5, outputPer1M: 15 },
+
+  // GPT-4.1 Series
+  'gpt-4.1': { inputPer1M: 2, outputPer1M: 8 },
+  'gpt-4.1-mini': { inputPer1M: 0.4, outputPer1M: 1.6 },
+  'gpt-4.1-nano': { inputPer1M: 0.1, outputPer1M: 0.4 },
+
+  // GPT-4o Series
   'gpt-4o': { inputPer1M: 2.5, outputPer1M: 10 },
   'gpt-4o-mini': { inputPer1M: 0.15, outputPer1M: 0.6 },
+
+  // o3 Reasoning Models
+  'o3': { inputPer1M: 2, outputPer1M: 8 },
+  'o3-mini': { inputPer1M: 0.55, outputPer1M: 2.2 },
+  'o3-pro': { inputPer1M: 20, outputPer1M: 80 },
+
+  // o1 Reasoning Models
+  'o1': { inputPer1M: 15, outputPer1M: 60 },
+  'o1-mini': { inputPer1M: 3, outputPer1M: 12 },
+  'o1-pro': { inputPer1M: 150, outputPer1M: 600 },
+
+  // Legacy OpenAI
   'gpt-4-turbo': { inputPer1M: 10, outputPer1M: 30 },
   'gpt-3.5-turbo': { inputPer1M: 0.5, outputPer1M: 1.5 },
 
-  // Anthropic models
+  // ==========================================================================
+  // Anthropic Models
+  // ==========================================================================
+
+  // Claude 4.5 Series (current flagship)
+  'claude-sonnet-4-5': { inputPer1M: 3, outputPer1M: 15 },
+  'claude-haiku-4-5': { inputPer1M: 1, outputPer1M: 5 },
+  'claude-opus-4-5': { inputPer1M: 5, outputPer1M: 25 },
+  'claude-sonnet-4-5-20250929': { inputPer1M: 3, outputPer1M: 15 },
+  'claude-haiku-4-5-20251001': { inputPer1M: 1, outputPer1M: 5 },
+  'claude-opus-4-5-20251101': { inputPer1M: 5, outputPer1M: 25 },
+
+  // Claude 4 Series (legacy)
+  'claude-sonnet-4': { inputPer1M: 3, outputPer1M: 15 },
+  'claude-opus-4': { inputPer1M: 15, outputPer1M: 75 },
+  'claude-opus-4-1': { inputPer1M: 15, outputPer1M: 75 },
+
+  // Claude 3.x (deprecated)
   'claude-3-5-sonnet-latest': { inputPer1M: 3, outputPer1M: 15 },
   'claude-3-5-haiku-latest': { inputPer1M: 0.8, outputPer1M: 4 },
   'claude-3-opus-latest': { inputPer1M: 15, outputPer1M: 75 },
+  'claude-3-haiku-20240307': { inputPer1M: 0.25, outputPer1M: 1.25 },
+
+  // ==========================================================================
+  // Google Gemini Models
+  // ==========================================================================
+
+  // Gemini 3 Series (preview)
+  'gemini-3-pro-preview': { inputPer1M: 3.5, outputPer1M: 14 },
+  'gemini-3-flash-preview': { inputPer1M: 0.5, outputPer1M: 2 },
+
+  // Gemini 2.5 Series (production)
+  'gemini-2.5-pro': { inputPer1M: 1.25, outputPer1M: 10 },
+  'gemini-2.5-flash': { inputPer1M: 0.15, outputPer1M: 0.6 },
+  'gemini-2.5-flash-lite': { inputPer1M: 0.075, outputPer1M: 0.3 },
+
+  // Gemini 2.0 Series
+  'gemini-2.0-flash': { inputPer1M: 0.1, outputPer1M: 0.4 },
+  'gemini-2.0-flash-lite': { inputPer1M: 0.075, outputPer1M: 0.3 },
 };
 
 /**
@@ -85,9 +148,12 @@ export function calculateCost(model: string, usage: TokenUsage): number {
 /**
  * Detect provider from model name.
  */
-export function detectProvider(model: string): 'openai' | 'anthropic' {
+export function detectProvider(model: string): 'openai' | 'anthropic' | 'google' {
   if (model.startsWith('claude')) {
     return 'anthropic';
+  }
+  if (model.startsWith('gemini')) {
+    return 'google';
   }
   return 'openai';
 }
