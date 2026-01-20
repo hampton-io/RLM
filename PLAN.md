@@ -880,7 +880,7 @@ FINAL_VAR("result")
 - [x] Installation guide for Claude Code
 - [x] Configuration reference
 - [x] API documentation for tools
-- [ ] Example workflows
+- [x] Example workflows
 - [ ] Publish to npm as `@rlm/claude-code-plugin`
 
 **Phase 12 Implementation:**
@@ -892,6 +892,68 @@ FINAL_VAR("result")
 - Real-time file watching with debouncing
 - Claude Code manifest with commands and keybindings
 - Test suite with 4 test files (server, indexer, search, language utils)
+
+---
+
+## Phase 13: Advanced Integrations & Production Readiness
+
+### 13.1 CLI Enhancements
+- [ ] `--image <path>` - Multimodal queries with vision models
+- [ ] `--chunk-strategy <strategy>` - Select chunking strategy (fixed, semantic, sentence, paragraph)
+- [ ] `--session <id>` - Resume interrupted sessions
+- [ ] `--benchmark` - Performance testing mode with detailed metrics
+
+### 13.2 Session Integration with RLMExecutor
+- [ ] Automatic checkpointing during multi-iteration execution
+- [ ] Seamless session resumption from last checkpoint
+- [ ] Session state included in streaming events
+- [ ] Configurable checkpoint storage (file system, custom adapters)
+- [ ] Recovery from interrupted executions
+
+### 13.3 Embeddings Integration with RLM
+- [ ] Use embeddings for intelligent context selection
+- [ ] Hybrid semantic + lexical context retrieval
+- [ ] Automatic context reranking by query relevance
+- [ ] Configurable similarity thresholds
+- [ ] Cache embeddings for repeated queries
+
+### 13.4 MCP Tool Implementations
+- [ ] **find_security_issues**: Full implementation
+  - [ ] Hardcoded secrets detection (API keys, passwords, tokens)
+  - [ ] SQL injection pattern detection
+  - [ ] XSS vulnerability patterns
+  - [ ] Unsafe eval/exec detection
+  - [ ] Path traversal vulnerabilities
+- [ ] **suggest_refactoring**: Full implementation
+  - [ ] Code duplication detection
+  - [ ] High complexity function identification
+  - [ ] Naming convention violations
+  - [ ] Dead code detection
+  - [ ] Long function/class suggestions
+- [ ] **generate_tests**: Full implementation
+  - [ ] Unit test generation based on existing patterns
+  - [ ] Test framework detection (Jest, Vitest, pytest, etc.)
+  - [ ] Mock generation for dependencies
+  - [ ] Edge case identification
+
+### 13.5 Performance & Benchmarks
+- [ ] Benchmark suite for context processing
+  - [ ] 10K token context benchmarks
+  - [ ] 50K token context benchmarks
+  - [ ] 100K token context benchmarks
+- [ ] Chunking strategy comparison
+  - [ ] Fixed vs semantic vs sentence vs paragraph
+  - [ ] Quality vs speed tradeoffs
+- [ ] Memory profiling for large documents
+- [ ] Published benchmark results in documentation
+- [ ] CI integration for regression detection
+
+### 13.6 Web Dashboard (Optional)
+- [ ] Web UI for execution visualization
+- [ ] Session history browser
+- [ ] Cost tracking dashboard
+- [ ] Trace viewer with timeline
+- [ ] Real-time streaming display
 
 ---
 

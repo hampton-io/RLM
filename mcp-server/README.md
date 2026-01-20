@@ -11,6 +11,10 @@ A Model Context Protocol (MCP) server that provides semantic code search and ana
 - **Real-time Updates**: Automatic index updates when files change
 - **Multi-language Support**: TypeScript, JavaScript, Python, Go, Rust, Java, Kotlin, C/C++
 
+## Documentation
+
+- **[Example Workflows](docs/workflows.md)**: Real-world usage patterns including onboarding, refactoring, code review, bug investigation, dependency audits, and API documentation generation.
+
 ## Installation
 
 ```bash

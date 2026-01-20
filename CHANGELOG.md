@@ -517,12 +517,47 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `indexer.test.ts` - Codebase indexing tests
   - `search.test.ts` - Search engine tests
   - `language.test.ts` - Language detection and symbol extraction tests
+- Example Workflows Documentation (`mcp-server/docs/workflows.md`):
+  - Onboarding to a new codebase workflow
+  - Refactoring a module workflow
+  - Code review workflow
+  - Bug investigation workflow
+  - Dependency audit workflow
+  - API documentation workflow
 
-### Planned
-- Performance benchmarks
-- Additional examples for new models
-- CLI `--image` flag for multimodal queries
-- CLI `--chunk-strategy` flag for chunking options
+### Planned (Phase 13: Advanced Integrations & Production Readiness)
+
+#### CLI Enhancements
+- CLI `--image` flag for multimodal queries with vision models
+- CLI `--chunk-strategy` flag for chunking strategy selection (fixed, semantic, sentence, paragraph)
 - CLI `--session` flag for session resume
+- CLI `--benchmark` flag for performance testing mode
+
+#### Session Integration with RLMExecutor
+- Automatic checkpointing during multi-iteration execution
+- Seamless session resumption from last checkpoint
+- Session state in streaming events
+- Configurable checkpoint storage
+
+#### Embeddings Integration with RLM
 - Integration of embeddings with RLM context processing
-- Session integration with RLMExecutor for automatic checkpointing
+- Hybrid semantic + lexical context retrieval
+- Automatic context reranking by query relevance
+- Configurable similarity thresholds
+
+#### MCP Tool Implementations
+- `find_security_issues` - Full implementation with hardcoded secrets, SQL injection, XSS, unsafe eval detection
+- `suggest_refactoring` - Full implementation with duplication, complexity, naming, dead code detection
+- `generate_tests` - Unit test generation with framework detection and mock generation
+
+#### Performance & Benchmarks
+- Benchmark suite for 10K, 50K, 100K token contexts
+- Chunking strategy comparison
+- Memory profiling for large documents
+- Published benchmark results
+
+#### Web Dashboard (Optional)
+- Web UI for execution visualization
+- Session history browser
+- Cost tracking dashboard
+- Trace viewer
