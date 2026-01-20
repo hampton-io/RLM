@@ -5,6 +5,42 @@ import { createVMSandbox } from './vm-sandbox.js';
 export type { SandboxConfig, LLMQueryCallback, LLMQueryParallelCallback } from './types.js';
 export { VMSandbox, createVMSandbox } from './vm-sandbox.js';
 
+// Tools exports
+export type {
+  SandboxTool,
+  ToolParameter,
+  ToolCategory,
+  ToolRegistry,
+  FetchOptions,
+  FetchResult,
+  CSVParseOptions,
+} from './tools.js';
+
+export {
+  // Built-in tools
+  BUILTIN_TOOLS,
+  parseJSONTool,
+  parseCSVTool,
+  formatTableTool,
+  dedupeTool,
+  sortTool,
+  groupByTool,
+  flattenTool,
+  pickTool,
+  omitTool,
+  countByTool,
+  summarizeTool,
+  extractBetweenTool,
+  truncateTool,
+  textStatsTool,
+  // Registry
+  createToolRegistry,
+  defaultToolRegistry,
+  getToolsHelp,
+  validateTool,
+  wrapToolFunction,
+} from './tools.js';
+
 /**
  * Supported sandbox types.
  */

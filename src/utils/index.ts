@@ -10,10 +10,29 @@ export {
 export {
   chunkText,
   chunkByLines,
-  estimateTokens,
+  estimateTokens as estimateTokensSimple,
   truncateToTokens,
   getContextStats,
 } from './context.js';
+
+export {
+  estimateTokens,
+  estimateTokensForString,
+  estimateTokensForMessages,
+  estimateInputTokens,
+  estimateOutputTokens,
+  estimateCost,
+  estimateTotalCost,
+  formatCostEstimate,
+  formatCostSummary,
+  compareCosts,
+  getCheapestModel,
+} from './tokens.js';
+export type {
+  TokenEstimate,
+  CostEstimate,
+  EstimateOptions,
+} from './tokens.js';
 
 export {
   RLMError,
@@ -57,3 +76,17 @@ export {
   raceWithTimeout,
 } from './timeout.js';
 export type { TimeoutResult, TimeoutOptions } from './timeout.js';
+
+export {
+  detectMediaType,
+  isSupportedMediaType,
+  getExtensionForMediaType,
+  loadImage,
+  createImageContent,
+  createImageContentFromUrl,
+  createImageContentFromBase64,
+  estimateImageTokens,
+  validateImageContent,
+  summarizeImageContent,
+} from './images.js';
+export type { ImageLoadOptions, ImageInfo } from './images.js';

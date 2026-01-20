@@ -19,7 +19,7 @@ import { RLMLogger } from './logger/index.js';
 /**
  * Default RLM options.
  */
-const DEFAULT_OPTIONS: Required<Omit<RLMOptions, 'apiKey' | 'provider'>> = {
+const DEFAULT_OPTIONS: Required<Omit<RLMOptions, 'apiKey' | 'provider' | 'extendedThinking'>> = {
   model: 'gpt-4o-mini',
   maxIterations: 20,
   maxDepth: 1,
@@ -32,7 +32,7 @@ const DEFAULT_OPTIONS: Required<Omit<RLMOptions, 'apiKey' | 'provider'>> = {
  * RLM Executor - orchestrates the REPL-style execution loop.
  */
 export class RLMExecutor {
-  private options: Required<Omit<RLMOptions, 'apiKey' | 'provider'>> & Pick<RLMOptions, 'apiKey' | 'provider'>;
+  private options: Required<Omit<RLMOptions, 'apiKey' | 'provider' | 'extendedThinking'>> & Pick<RLMOptions, 'apiKey' | 'provider' | 'extendedThinking'>;
   private client: LLMClient;
   private logger: RLMLogger;
 
@@ -81,7 +81,19 @@ export class RLMExecutor {
         // Get LLM response
         const completion = await this.client.completion(messages, {
           temperature: this.options.temperature,
+          thinking: this.options.extendedThinking,
         });
+
+        // Log extended thinking if present
+        if (completion.thinking) {
+          this.logger.logExtendedThinking(
+            0,
+            completion.thinking,
+            this.options.extendedThinking?.budgetTokens ?? 1024,
+            iteration
+          );
+          options.onStep?.(this.logger.getEntries().slice(-1)[0]);
+        }
 
         this.logger.logLLMCall(0, messages, completion.content, completion.usage);
         options.onStep?.(this.logger.getEntries().slice(-1)[0]);

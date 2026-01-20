@@ -107,6 +107,30 @@ export class RLMLogger {
   }
 
   /**
+   * Log extended thinking from Claude 4.5+.
+   */
+  logExtendedThinking(
+    depth: number,
+    thinking: string,
+    budgetTokens: number,
+    iteration: number
+  ): void {
+    this.addEntry('extended_thinking', depth, {
+      type: 'extended_thinking',
+      thinking,
+      budgetTokens,
+      iteration,
+    });
+
+    if (this.verbose) {
+      console.log(`[RLM] Extended thinking (iteration=${iteration}):`, {
+        thinkingLength: thinking.length,
+        budgetTokens,
+      });
+    }
+  }
+
+  /**
    * Log the final output.
    */
   logFinalOutput(

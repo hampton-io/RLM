@@ -1,7 +1,18 @@
 import { GoogleGenAI } from '@google/genai';
-import type { Message, CompletionOptions, CompletionResult, StreamChunk, GoogleModel } from '../types.js';
+import type {
+  Message,
+  CompletionOptions,
+  CompletionResult,
+  StreamChunk,
+  GoogleModel,
+  MessageContent,
+} from '../types.js';
+import { isMultimodalContent, isImageContent, getTextFromContent } from '../types.js';
 import { BaseLLMClient } from './base.js';
 import type { LLMClientConfig } from './types.js';
+
+/** Gemini content part type */
+type GeminiPart = { text: string } | { inlineData: { mimeType: string; data: string } };
 
 /**
  * Google Gemini client implementation.
@@ -40,7 +51,7 @@ export class GoogleClient extends BaseLLMClient {
         model: this.model,
         contents,
         config: {
-          systemInstruction: systemMessage?.content,
+          systemInstruction: systemMessage ? this.convertSystemContent(systemMessage.content) : undefined,
           maxOutputTokens: options.maxTokens,
           temperature: options.temperature ?? 0,
           stopSequences: options.stopSequences,
@@ -84,7 +95,7 @@ export class GoogleClient extends BaseLLMClient {
       model: this.model,
       contents,
       config: {
-        systemInstruction: systemMessage?.content,
+        systemInstruction: systemMessage ? this.convertSystemContent(systemMessage.content) : undefined,
         maxOutputTokens: options.maxTokens,
         temperature: options.temperature ?? 0,
         stopSequences: options.stopSequences,
@@ -127,19 +138,55 @@ export class GoogleClient extends BaseLLMClient {
   }
 
   /**
+   * Convert MessageContent to Gemini parts array.
+   */
+  private convertContentToParts(content: MessageContent): GeminiPart[] {
+    if (!isMultimodalContent(content)) {
+      return [{ text: content }];
+    }
+
+    return content.map((part): GeminiPart => {
+      if (isImageContent(part)) {
+        // Gemini only supports base64 inline data for images
+        // If URL is provided, we would need to fetch it first (not implemented here)
+        if (part.source.type === 'url') {
+          // For URLs, include as text placeholder (proper implementation would fetch the image)
+          return { text: `[Image URL: ${part.source.url}]` };
+        }
+        return {
+          inlineData: {
+            mimeType: part.source.mediaType,
+            data: part.source.data!,
+          },
+        };
+      } else {
+        return { text: part.text };
+      }
+    });
+  }
+
+  /**
+   * Convert system message content to plain text.
+   * System instructions in Gemini only support text.
+   */
+  private convertSystemContent(content: MessageContent): string {
+    return getTextFromContent(content);
+  }
+
+  /**
    * Convert messages to Gemini format.
    * Gemini uses 'user' and 'model' roles, not 'assistant'.
    */
-  private convertMessages(messages: Message[]): string | Array<{ role: string; parts: Array<{ text: string }> }> {
-    // If there's only one user message, we can use a simple string
-    if (messages.length === 1 && messages[0].role === 'user') {
+  private convertMessages(messages: Message[]): string | Array<{ role: string; parts: GeminiPart[] }> {
+    // If there's only one user message with simple string content, use a simple string
+    if (messages.length === 1 && messages[0].role === 'user' && !isMultimodalContent(messages[0].content)) {
       return messages[0].content;
     }
 
-    // Otherwise, convert to Gemini's multi-turn format
+    // Otherwise, convert to Gemini's multi-turn format with parts
     return messages.map((m) => ({
       role: m.role === 'assistant' ? 'model' : 'user',
-      parts: [{ text: m.content }],
+      parts: this.convertContentToParts(m.content),
     }));
   }
 

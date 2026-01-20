@@ -1,4 +1,5 @@
 import type { SandboxOptions, SandboxResult, SandboxEnvironment } from '../types.js';
+import type { SandboxTool, ToolRegistry } from './tools.js';
 
 export type { SandboxOptions, SandboxResult, SandboxEnvironment };
 
@@ -30,6 +31,15 @@ export interface SandboxConfig {
 
   /** Sandbox options */
   options?: SandboxOptions;
+
+  /** Custom tools to inject into sandbox */
+  tools?: SandboxTool[];
+
+  /** Tool registry to use (if not provided, uses default with built-ins) */
+  toolRegistry?: ToolRegistry;
+
+  /** Whether to include built-in tools (default: true) */
+  includeBuiltinTools?: boolean;
 }
 
 /**

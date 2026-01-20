@@ -20,7 +20,7 @@ import { RLMLogger } from './logger/index.js';
 /**
  * Default RLM options.
  */
-const DEFAULT_OPTIONS: Required<Omit<RLMOptions, 'apiKey' | 'provider'>> = {
+const DEFAULT_OPTIONS: Required<Omit<RLMOptions, 'apiKey' | 'provider' | 'extendedThinking'>> = {
   model: 'gpt-4o-mini',
   maxIterations: 20,
   maxDepth: 1,
@@ -33,7 +33,7 @@ const DEFAULT_OPTIONS: Required<Omit<RLMOptions, 'apiKey' | 'provider'>> = {
  * RLM Streaming Executor - yields events as they occur during execution.
  */
 export class RLMStreamingExecutor {
-  private options: Required<Omit<RLMOptions, 'apiKey' | 'provider'>> & Pick<RLMOptions, 'apiKey' | 'provider'>;
+  private options: Required<Omit<RLMOptions, 'apiKey' | 'provider' | 'extendedThinking'>> & Pick<RLMOptions, 'apiKey' | 'provider' | 'extendedThinking'>;
   private client: LLMClient;
   private logger: RLMLogger;
 
@@ -88,7 +88,24 @@ export class RLMStreamingExecutor {
         // Get LLM response
         const completion = await this.client.completion(messages, {
           temperature: this.options.temperature,
+          thinking: this.options.extendedThinking,
         });
+
+        // Emit extended thinking event if present (Claude 4.5+)
+        if (completion.thinking) {
+          this.logger.logExtendedThinking(
+            0,
+            completion.thinking,
+            this.options.extendedThinking?.budgetTokens ?? 1024,
+            iteration
+          );
+
+          yield this.createEvent('extended_thinking', {
+            content: completion.thinking,
+            iteration,
+            complete: true,
+          });
+        }
 
         this.logger.logLLMCall(0, messages, completion.content, completion.usage);
 

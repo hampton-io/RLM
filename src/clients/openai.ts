@@ -1,5 +1,17 @@
 import OpenAI from 'openai';
-import type { Message, CompletionOptions, CompletionResult, StreamChunk, OpenAIModel } from '../types.js';
+import type {
+  ChatCompletionContentPart,
+  ChatCompletionMessageParam,
+} from 'openai/resources/chat/completions';
+import type {
+  Message,
+  CompletionOptions,
+  CompletionResult,
+  StreamChunk,
+  OpenAIModel,
+  MessageContent,
+} from '../types.js';
+import { isMultimodalContent, isImageContent } from '../types.js';
 import { BaseLLMClient } from './base.js';
 import type { LLMClientConfig } from './types.js';
 
@@ -30,16 +42,73 @@ export class OpenAIClient extends BaseLLMClient {
   }
 
   /**
+   * Convert our MessageContent to OpenAI's content format.
+   */
+  private convertContent(content: MessageContent): string | ChatCompletionContentPart[] {
+    if (!isMultimodalContent(content)) {
+      return content;
+    }
+
+    return content.map((part): ChatCompletionContentPart => {
+      if (isImageContent(part)) {
+        // Convert our ImageContent to OpenAI's image_url format
+        const imageUrl = part.source.type === 'url'
+          ? part.source.url!
+          : `data:${part.source.mediaType};base64,${part.source.data}`;
+
+        return {
+          type: 'image_url',
+          image_url: {
+            url: imageUrl,
+            detail: part.detail ?? 'auto',
+          },
+        };
+      } else {
+        return {
+          type: 'text',
+          text: part.text,
+        };
+      }
+    });
+  }
+
+  /**
+   * Convert our Message array to OpenAI's message format.
+   */
+  private convertMessages(messages: Message[]): ChatCompletionMessageParam[] {
+    return messages.map((m): ChatCompletionMessageParam => {
+      const content = this.convertContent(m.content);
+
+      switch (m.role) {
+        case 'system':
+          // System messages only support string content
+          return {
+            role: 'system',
+            content: typeof content === 'string' ? content : content.map(p => p.type === 'text' ? p.text : '').join('\n'),
+          };
+        case 'user':
+          return {
+            role: 'user',
+            content,
+          };
+        case 'assistant':
+          // Assistant messages only support string content
+          return {
+            role: 'assistant',
+            content: typeof content === 'string' ? content : content.map(p => p.type === 'text' ? p.text : '').join('\n'),
+          };
+      }
+    });
+  }
+
+  /**
    * Generate a completion using OpenAI's chat API.
    */
   async completion(messages: Message[], options: CompletionOptions = {}): Promise<CompletionResult> {
     return this.withRetry(async () => {
       const response = await this.client.chat.completions.create({
         model: this.model,
-        messages: messages.map((m) => ({
-          role: m.role,
-          content: m.content,
-        })),
+        messages: this.convertMessages(messages),
         temperature: options.temperature ?? 0,
         max_tokens: options.maxTokens,
         stop: options.stopSequences,
@@ -71,10 +140,7 @@ export class OpenAIClient extends BaseLLMClient {
   ): AsyncGenerator<StreamChunk, CompletionResult, unknown> {
     const stream = await this.client.chat.completions.create({
       model: this.model,
-      messages: messages.map((m) => ({
-        role: m.role,
-        content: m.content,
-      })),
+      messages: this.convertMessages(messages),
       temperature: options.temperature ?? 0,
       max_tokens: options.maxTokens,
       stop: options.stopSequences,

@@ -1,4 +1,4 @@
-import type { LLMClient } from './types.js';
+import type { LLMClient, TokenCount } from './types.js';
 import type { Message, CompletionOptions, CompletionResult, StreamChunk } from '../types.js';
 import { withRetry, type RetryOptions, isRetryableError } from '../utils/retry.js';
 
@@ -121,6 +121,14 @@ export class ResilientClient implements LLMClient {
 
     // Yield remaining chunks from the generator
     return yield* generator;
+  }
+
+  /**
+   * Count tokens for a string or message array.
+   * Delegates to the underlying client.
+   */
+  countTokens(input: string | Message[]): TokenCount {
+    return this.client.countTokens(input);
   }
 
   /**

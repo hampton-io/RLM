@@ -9,6 +9,7 @@ export type {
   RLMOptions,
   RLMCompletionOptions,
   RLMResult,
+  DryRunResult,
   RLMError,
   RLMErrorCode,
 
@@ -35,6 +36,10 @@ export type {
 
   // Message types
   Message,
+  MessageContent,
+  TextContent,
+  ImageContent,
+  ImageMediaType,
   CompletionOptions,
   CompletionResult,
   StreamChunk,
@@ -73,12 +78,78 @@ export {
   ResilientClient,
   createResilientClient,
   withLLMRetry,
+  // OpenAI Responses API
+  OpenAIResponsesClient,
+  createResponsesClient,
+  supportsResponsesAPI,
+  extractCitationUrls,
+  extractCitationFileIds,
+  formatCitationsAsFootnotes,
+  webSearchTool,
+  fileSearchTool,
 } from './clients/index.js';
-export type { LLMClient, LLMClientConfig, ResilientClientOptions } from './clients/index.js';
+export type {
+  LLMClient,
+  LLMClientConfig,
+  ResilientClientOptions,
+  TokenCount,
+  // Responses API types
+  ResponsesModel,
+  WebSearchTool,
+  FileSearchTool,
+  CodeInterpreterTool,
+  FunctionTool,
+  ResponsesTool,
+  ResponsesInputMessage,
+  UrlCitation,
+  FileCitation,
+  Citation,
+  TextOutputContent,
+  WebSearchCallOutput,
+  FileSearchCallOutput,
+  MessageOutput,
+  OutputItem,
+  ResponsesResult,
+  ResponsesOptions,
+  ResponsesStreamEvent,
+} from './clients/index.js';
 
 // Sandbox exports
-export { createSandbox, VMSandbox, createVMSandbox } from './sandbox/index.js';
-export type { SandboxConfig, LLMQueryCallback, LLMQueryParallelCallback } from './sandbox/index.js';
+export {
+  createSandbox,
+  VMSandbox,
+  createVMSandbox,
+  // Tools
+  BUILTIN_TOOLS,
+  createToolRegistry,
+  defaultToolRegistry,
+  getToolsHelp,
+  validateTool,
+  wrapToolFunction,
+  parseJSONTool,
+  parseCSVTool,
+  formatTableTool,
+  dedupeTool,
+  sortTool,
+  groupByTool,
+  flattenTool,
+  pickTool,
+  omitTool,
+  countByTool,
+  summarizeTool,
+  extractBetweenTool,
+  truncateTool,
+  textStatsTool,
+} from './sandbox/index.js';
+export type {
+  SandboxConfig,
+  LLMQueryCallback,
+  LLMQueryParallelCallback,
+  SandboxTool,
+  ToolParameter,
+  ToolCategory,
+  ToolRegistry,
+} from './sandbox/index.js';
 
 // Utility exports
 export {
@@ -91,9 +162,20 @@ export {
   // Context
   chunkText,
   chunkByLines,
-  estimateTokens,
   truncateToTokens,
   getContextStats,
+  // Token estimation
+  estimateTokens,
+  estimateTokensForString,
+  estimateTokensForMessages,
+  estimateInputTokens,
+  estimateOutputTokens,
+  estimateCost,
+  estimateTotalCost,
+  formatCostEstimate,
+  formatCostSummary,
+  compareCosts,
+  getCheapestModel,
   // Errors
   isRLMError,
   isRLMErrorCode,
@@ -118,8 +200,29 @@ export {
   isDeadlinePassed,
   getRemainingTime,
   raceWithTimeout,
+  // Image utilities
+  detectMediaType,
+  isSupportedMediaType,
+  getExtensionForMediaType,
+  loadImage,
+  createImageContent,
+  createImageContentFromUrl,
+  createImageContentFromBase64,
+  estimateImageTokens,
+  validateImageContent,
+  summarizeImageContent,
 } from './utils/index.js';
-export type { RetryOptions, RetryResult, TimeoutOptions, TimeoutResult } from './utils/index.js';
+export type {
+  RetryOptions,
+  RetryResult,
+  TimeoutOptions,
+  TimeoutResult,
+  TokenEstimate,
+  CostEstimate,
+  EstimateOptions,
+  ImageLoadOptions,
+  ImageInfo,
+} from './utils/index.js';
 
 // Logger exports
 export {
@@ -130,8 +233,47 @@ export {
 } from './logger/index.js';
 export type { TraceReporterOptions, TraceSession } from './logger/index.js';
 
+// Multimodal helpers
+export {
+  isMultimodalContent,
+  isImageContent,
+  isTextContent,
+  getTextFromContent,
+  getImagesFromContent,
+} from './types.js';
+
 // Prompt exports
 export { getSystemPrompt, createUserPrompt } from './prompts/index.js';
+
+// Template exports
+export {
+  BUILTIN_TEMPLATES,
+  getBuiltinTemplate,
+  summarizeTemplate,
+  extractTemplate,
+  analyzeTemplate,
+  compareTemplate,
+  searchTemplate,
+  qaTemplate,
+  codeReviewTemplate,
+  renderTemplate,
+  render,
+  createTemplateRegistry,
+  defaultRegistry,
+  listTemplateIds,
+  getTemplateHelp,
+  parseTemplateVars,
+  quickTemplate,
+} from './templates/index.js';
+export type {
+  PromptTemplate,
+  TemplateCategory,
+  TemplateVariable,
+  TemplateExample,
+  RenderOptions,
+  RenderResult,
+  TemplateRegistry,
+} from './templates/index.js';
 
 // Configuration exports
 export {
@@ -160,6 +302,27 @@ export {
   PROVIDER_RATE_LIMITS,
 } from './rate-limiter.js';
 export type { RateLimiterOptions } from './rate-limiter.js';
+
+// Fallback chain exports
+export {
+  FallbackChainClient,
+  createFallbackChain,
+  createProviderFallbackChain,
+  createCostOptimizedChain,
+  createQualityOptimizedChain,
+  withFallback,
+  isRateLimitError,
+  isTimeoutError,
+  isServerError,
+  DEFAULT_FALLBACK_CHAINS,
+  COST_OPTIMIZED_CHAIN,
+  QUALITY_OPTIMIZED_CHAIN,
+} from './fallback.js';
+export type {
+  FallbackEvent,
+  FallbackChainOptions,
+  FallbackChainResult,
+} from './fallback.js';
 
 // Cache exports
 export {
@@ -204,3 +367,98 @@ export type {
   ProgressCallback,
   WebhookConfig,
 } from './progress.js';
+
+// Embeddings exports
+export {
+  // Embedding clients
+  OpenAIEmbeddingClient,
+  createOpenAIEmbeddingClient,
+  GoogleEmbeddingClient,
+  createGoogleEmbeddingClient,
+  createEmbeddingClient,
+  detectEmbeddingProvider,
+  // Similarity utilities
+  cosineSimilarity,
+  euclideanDistance,
+  dotProduct,
+  normalizeVector,
+  averageVectors,
+  MemoryVectorStore,
+  createMemoryVectorStore,
+  findSimilarChunks,
+  rerankBySimilarity,
+  // Semantic chunking
+  splitIntoSentences,
+  splitIntoParagraphs,
+  estimateTokenCount,
+  chunkFixed,
+  chunkBySentences,
+  chunkByParagraphs,
+  chunkSemantic,
+  chunkText as chunkTextSemantic,
+  embedChunks,
+} from './embeddings/index.js';
+export type {
+  // Embedding models
+  OpenAIEmbeddingModel,
+  GoogleEmbeddingModel,
+  EmbeddingModel,
+  EmbeddingProvider,
+  // Client types
+  EmbeddingClientConfig,
+  EmbeddingResult,
+  BatchEmbeddingResult,
+  EmbeddingClient,
+  // Chunking types
+  ChunkStrategy,
+  SemanticChunkOptions,
+  TextChunk,
+  SemanticChunkResult,
+  // Similarity types
+  SimilaritySearchOptions,
+  SimilarityResult,
+  SimilaritySearchResult,
+  // Vector store types
+  VectorStoreOptions,
+  VectorStore,
+} from './embeddings/index.js';
+
+// Session persistence exports
+export {
+  // Factory and persistence
+  createSession,
+  saveSession,
+  loadSession,
+  validateSession,
+  // Session updates
+  updateSessionStatus,
+  updateSessionCheckpoint,
+  updateSessionSandbox,
+  addSessionTrace,
+  updateSessionCost,
+  completeSession,
+  failSession,
+  // Session manager
+  SessionManager,
+  // Utilities
+  canResumeSession,
+  getSessionProgress,
+  exportSession,
+  importSession,
+  createSessionId,
+  // Constants
+  SESSION_VERSION,
+  DEFAULT_SESSION_DIR,
+} from './session.js';
+export type {
+  SessionStatus,
+  ExecutionCheckpoint,
+  SandboxSnapshot,
+  SessionCost,
+  SessionMetadata,
+  RLMSession,
+  CreateSessionOptions,
+  SaveSessionOptions,
+  LoadSessionOptions,
+  SessionListEntry,
+} from './session.js';

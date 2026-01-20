@@ -1,12 +1,13 @@
-import type { Message, CompletionOptions, CompletionResult, StreamChunk } from '../types.js';
-import type { LLMClient, LLMClientConfig } from './types.js';
+import type { Message, CompletionOptions, CompletionResult, StreamChunk, ModelProvider } from '../types.js';
+import type { LLMClient, LLMClientConfig, TokenCount } from './types.js';
+import { estimateTokensForString, estimateTokensForMessages } from '../utils/tokens.js';
 
 /**
  * Abstract base class for LLM clients.
  * Provides common functionality like retry logic and error handling.
  */
 export abstract class BaseLLMClient implements LLMClient {
-  abstract readonly provider: string;
+  abstract readonly provider: ModelProvider;
   abstract readonly model: string;
 
   protected config: Required<LLMClientConfig>;
@@ -26,6 +27,26 @@ export abstract class BaseLLMClient implements LLMClient {
     messages: Message[],
     options?: CompletionOptions
   ): AsyncGenerator<StreamChunk, CompletionResult, unknown>;
+
+  /**
+   * Count tokens for a string or message array.
+   * Uses provider-specific heuristics by default.
+   * Subclasses can override to use tokenizers or API calls.
+   */
+  countTokens(input: string | Message[]): TokenCount {
+    let tokens: number;
+
+    if (typeof input === 'string') {
+      tokens = estimateTokensForString(input, this.provider);
+    } else {
+      tokens = estimateTokensForMessages(input, this.provider);
+    }
+
+    return {
+      tokens,
+      method: 'heuristic',
+    };
+  }
 
   /**
    * Retry a function with exponential backoff.

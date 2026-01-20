@@ -67,21 +67,123 @@ export type GoogleModel =
 
 export type SupportedModel = OpenAIModel | AnthropicModel | GoogleModel;
 
+// =============================================================================
+// Multimodal Content Types
+// =============================================================================
+
+/** Supported image MIME types */
+export type ImageMediaType = 'image/jpeg' | 'image/png' | 'image/gif' | 'image/webp';
+
+/**
+ * Text content part for multimodal messages.
+ */
+export interface TextContent {
+  type: 'text';
+  text: string;
+}
+
+/**
+ * Image content part for multimodal messages.
+ * Supports both base64-encoded data and URLs.
+ */
+export interface ImageContent {
+  type: 'image';
+  /** Image source - either base64 data or URL */
+  source: {
+    /** Source type: 'base64' for inline data, 'url' for remote images */
+    type: 'base64' | 'url';
+    /** Base64 encoded image data (required when type: 'base64') */
+    data?: string;
+    /** Image URL (required when type: 'url') */
+    url?: string;
+    /** MIME type of the image */
+    mediaType: ImageMediaType;
+  };
+  /** Detail level for image analysis (OpenAI only, default: 'auto') */
+  detail?: 'low' | 'high' | 'auto';
+}
+
+/**
+ * Content can be a simple string or an array of content parts (text/images).
+ * Use string for text-only messages, array for multimodal messages.
+ */
+export type MessageContent = string | (TextContent | ImageContent)[];
+
+/**
+ * Check if content is multimodal (array of parts).
+ */
+export function isMultimodalContent(content: MessageContent): content is (TextContent | ImageContent)[] {
+  return Array.isArray(content);
+}
+
+/**
+ * Check if a content part is an image.
+ */
+export function isImageContent(part: TextContent | ImageContent): part is ImageContent {
+  return part.type === 'image';
+}
+
+/**
+ * Check if a content part is text.
+ */
+export function isTextContent(part: TextContent | ImageContent): part is TextContent {
+  return part.type === 'text';
+}
+
+/**
+ * Extract plain text from message content.
+ * For multimodal content, concatenates all text parts.
+ */
+export function getTextFromContent(content: MessageContent): string {
+  if (typeof content === 'string') {
+    return content;
+  }
+  return content
+    .filter(isTextContent)
+    .map(part => part.text)
+    .join('\n');
+}
+
+/**
+ * Extract all images from message content.
+ */
+export function getImagesFromContent(content: MessageContent): ImageContent[] {
+  if (typeof content === 'string') {
+    return [];
+  }
+  return content.filter(isImageContent);
+}
+
 export interface Message {
   role: 'system' | 'user' | 'assistant';
-  content: string;
+  content: MessageContent;
 }
 
 export interface CompletionOptions {
   temperature?: number;
   maxTokens?: number;
   stopSequences?: string[];
+  /** Extended thinking configuration (Claude 4.5+ only) */
+  thinking?: ExtendedThinkingConfig;
+}
+
+/**
+ * Configuration for Claude's extended thinking mode.
+ * Allows the model to "think" before responding, showing reasoning process.
+ */
+export interface ExtendedThinkingConfig {
+  /** Whether extended thinking is enabled */
+  enabled: boolean;
+  /** Token budget for the thinking process (default: 1024) */
+  budgetTokens?: number;
 }
 
 export interface CompletionResult {
   content: string;
   usage: TokenUsage;
   finishReason: 'stop' | 'length' | 'tool_calls' | 'content_filter' | 'unknown';
+  /** Extended thinking content (Claude 4.5+ only, when thinking is enabled) */
+  thinking?: string;
 }
 
 export interface TokenUsage {
@@ -93,6 +195,8 @@ export interface TokenUsage {
 export interface StreamChunk {
   content: string;
   done: boolean;
+  /** Type of content being streamed */
+  type?: 'text' | 'thinking';
 }
 
 // =============================================================================
@@ -132,11 +236,53 @@ export interface RLMOptions {
   verbose?: boolean;             // Log execution details (default: false)
   temperature?: number;          // LLM temperature (default: 0)
   apiKey?: string;               // Override env var API key
+  /** Extended thinking configuration (Claude 4.5+ only) */
+  extendedThinking?: ExtendedThinkingConfig;
 }
 
 export interface RLMCompletionOptions {
   stream?: boolean;              // Stream results (default: false)
   onStep?: (step: TraceEntry) => void;  // Callback for each execution step
+}
+
+export interface DryRunResult {
+  /** Token estimates */
+  tokens: {
+    inputTokens: number;
+    outputTokens: number;
+    totalTokens: number;
+  };
+  /** Cost estimates */
+  cost: {
+    estimated: number;
+    breakdown: {
+      inputCost: number;
+      outputCost: number;
+    };
+    pricing: {
+      inputPer1M: number;
+      outputPer1M: number;
+    };
+  };
+  /** Configuration that would be used */
+  config: {
+    model: SupportedModel;
+    provider: ModelProvider;
+    maxIterations: number;
+    maxDepth: number;
+    sandboxTimeout: number;
+    temperature: number;
+  };
+  /** Context statistics */
+  context: {
+    characters: number;
+    lines: number;
+    estimatedChunks: number;
+  };
+  /** Available sandbox functions */
+  sandboxFunctions: string[];
+  /** System prompt preview (truncated) */
+  systemPromptPreview: string;
 }
 
 export interface RLMResult {
@@ -157,6 +303,7 @@ export interface RLMResult {
 export type RLMStreamEventType =
   | 'start'
   | 'thinking'
+  | 'extended_thinking'
   | 'code'
   | 'code_output'
   | 'sub_query'
@@ -173,6 +320,15 @@ export interface StartEventData {
 export interface ThinkingEventData {
   content: string;
   iteration: number;
+}
+
+export interface ExtendedThinkingEventData {
+  /** The thinking content from Claude's extended thinking */
+  content: string;
+  /** Current iteration */
+  iteration: number;
+  /** Whether this is the complete thinking or a partial stream */
+  complete: boolean;
 }
 
 export interface CodeEventData {
@@ -216,6 +372,7 @@ export interface DoneEventData {
 export type RLMStreamEvent =
   | { type: 'start'; timestamp: number; data: StartEventData }
   | { type: 'thinking'; timestamp: number; data: ThinkingEventData }
+  | { type: 'extended_thinking'; timestamp: number; data: ExtendedThinkingEventData }
   | { type: 'code'; timestamp: number; data: CodeEventData }
   | { type: 'code_output'; timestamp: number; data: CodeOutputEventData }
   | { type: 'sub_query'; timestamp: number; data: SubQueryEventData }
@@ -227,6 +384,7 @@ export type RLMStreamEvent =
 export type RLMStreamEventData =
   | StartEventData
   | ThinkingEventData
+  | ExtendedThinkingEventData
   | CodeEventData
   | CodeOutputEventData
   | SubQueryEventData
@@ -243,6 +401,7 @@ export type TraceEntryType =
   | 'llm_call'
   | 'code_execution'
   | 'sub_llm_call'
+  | 'extended_thinking'
   | 'final_output'
   | 'error';
 
@@ -257,6 +416,7 @@ export type TraceData =
   | LLMCallTrace
   | CodeExecutionTrace
   | SubLLMCallTrace
+  | ExtendedThinkingTrace
   | FinalOutputTrace
   | ErrorTrace;
 
@@ -281,6 +441,16 @@ export interface SubLLMCallTrace {
   contextLength: number;
   response: string;
   usage: TokenUsage;
+}
+
+export interface ExtendedThinkingTrace {
+  type: 'extended_thinking';
+  /** The thinking content from Claude */
+  thinking: string;
+  /** Token budget that was configured */
+  budgetTokens: number;
+  /** Iteration during which thinking occurred */
+  iteration: number;
 }
 
 export interface FinalOutputTrace {

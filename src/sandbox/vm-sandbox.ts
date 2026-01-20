@@ -1,6 +1,8 @@
 import * as vm from 'node:vm';
 import type { SandboxEnvironment, SandboxResult, SandboxOptions } from '../types.js';
 import type { SandboxConfig, LLMQueryCallback, LLMQueryParallelCallback } from './types.js';
+import { createToolRegistry, wrapToolFunction } from './tools.js';
+import type { ToolRegistry } from './tools.js';
 
 /**
  * Default sandbox options.
@@ -34,11 +36,25 @@ export class VMSandbox implements SandboxEnvironment {
   private pendingQueries: PendingQuery[] = [];
   private queryCounter = 0;
   private isExecuting = false;
+  private toolRegistry: ToolRegistry;
 
   constructor(config: SandboxConfig) {
     this.options = { ...DEFAULT_OPTIONS, ...config.options };
     this.onLLMQuery = config.onLLMQuery;
     this.onLLMQueryParallel = config.onLLMQueryParallel;
+
+    // Set up tool registry
+    const includeBuiltins = config.includeBuiltinTools !== false;
+    this.toolRegistry = config.toolRegistry ?? createToolRegistry(includeBuiltins);
+
+    // Register any additional custom tools
+    if (config.tools) {
+      for (const tool of config.tools) {
+        if (!this.toolRegistry.has(tool.name)) {
+          this.toolRegistry.register(tool);
+        }
+      }
+    }
 
     // Create sandbox context with safe globals
     this.context = this.createContext(config.context);
@@ -172,6 +188,11 @@ export class VMSandbox implements SandboxEnvironment {
         this.variables[name] = value;
       },
     };
+
+    // Inject all registered tools
+    for (const tool of this.toolRegistry.list()) {
+      sandbox[tool.name] = wrapToolFunction(tool);
+    }
 
     return vm.createContext(sandbox);
   }

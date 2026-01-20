@@ -137,7 +137,339 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+#### Token Counter & Cost Estimation (Phase 8.1)
+- New `src/utils/tokens.ts` module with comprehensive token counting utilities
+- `estimateTokens()` for pre-execution token prediction using provider-specific heuristics
+- `estimateTokensForString()` with provider-aware character-to-token ratios
+- `estimateTokensForMessages()` for message array token estimation
+- `estimateCost()` and `estimateTotalCost()` for pre-execution cost prediction
+- `formatCostEstimate()` and `formatCostSummary()` for display formatting
+- `compareCosts()` and `getCheapestModel()` for multi-model cost comparison
+- `countTokens()` method added to `LLMClient` interface and `BaseLLMClient`
+- CLI `--estimate` flag for cost estimation without execution
+- CLI `--compare` flag for comparing costs across 12 popular models
+- 25 new unit tests for token counting accuracy
+
+#### Dry Run Mode (Phase 8.2)
+- `DryRunResult` type for comprehensive dry run output
+- Static `RLM.dryRun()` method - no API keys required
+- `RLM.formatDryRun()` for formatted console output
+- Shows configuration, context stats, token/cost estimates
+- Lists all available sandbox functions
+- Previews system prompt
+- CLI `--dry-run` flag for full dry run analysis
+
+#### Model Fallback Chain (Phase 8.3)
+- `FallbackChainClient` - automatic retry with next model on failure
+- `FallbackChainOptions` interface with customizable retry behavior
+- `FallbackEvent` type for fallback notifications
+- `createFallbackChain()` factory for custom chains
+- `createProviderFallbackChain()` for provider-specific chains
+- `createCostOptimizedChain()` - cheapest models first
+- `createQualityOptimizedChain()` - best models first
+- `withFallback()` wrapper for any async operation
+- Error classification: `isRateLimitError()`, `isTimeoutError()`, `isServerError()`
+- `DEFAULT_FALLBACK_CHAINS` for OpenAI, Anthropic, Google
+- 25 new unit tests for fallback scenarios
+
+#### Prompt Templates (Phase 8.4)
+- New `src/templates/` module for prompt template management
+- `PromptTemplate` interface with id, name, description, category, template, variables
+- `TemplateVariable` interface with name, description, required, default, example
+- `TemplateRegistry` interface for custom template management
+- 7 built-in templates:
+  - `summarize` - Document summarization with customizable format and focus
+  - `extract` - Structured data extraction to JSON
+  - `analyze` - Deep analysis with findings, patterns, implications
+  - `compare` - Multi-item comparison with criteria
+  - `search` - Find specific information with filters
+  - `qa` - Question answering with constraints
+  - `code-review` - Code review for bugs, security, quality
+- `renderTemplate()` with variable substitution and conditionals (`{{#if}}...{{/if}}`)
+- `render()` for rendering templates by ID
+- `quickTemplate()` for one-off template strings
+- `createTemplateRegistry()` factory for custom registries
+- `defaultRegistry` global registry with all built-in templates
+- `parseTemplateVars()` for CLI variable parsing (`key=value,key2=value2`)
+- `listTemplateIds()` and `getTemplateHelp()` utilities
+- CLI `--template <id>` flag to use a built-in template
+- CLI `--template-vars <vars>` flag to set template variables
+- CLI `--list-templates` flag to show available templates
+- 29 new unit tests for template rendering
+
+#### Custom Sandbox Tools (Phase 8.5)
+- New `src/sandbox/tools.ts` module for sandbox tool management
+- `SandboxTool` interface with name, description, function, parameters, category
+- `ToolRegistry` interface for managing available tools
+- `ToolParameter` interface for documenting tool parameters
+- 14 built-in tools:
+  - `parseJSON` - Safe JSON parsing with default value on error
+  - `parseCSV` - CSV parsing with configurable delimiter and headers
+  - `formatTable` - Format data as markdown table
+  - `dedupe` - Remove duplicates from arrays (by value or key)
+  - `sort` - Sort arrays (ascending/descending, by key for objects)
+  - `groupBy` - Group array items by a key value
+  - `flatten` - Flatten nested arrays to specified depth
+  - `pick` - Pick specific keys from objects
+  - `omit` - Omit specific keys from objects
+  - `countBy` - Count occurrences of values
+  - `summarize` - Statistical summary (sum, avg, min, max, count)
+  - `extractBetween` - Extract text between start/end markers
+  - `truncate` - Truncate text with custom suffix
+  - `textStats` - Get text statistics (words, lines, chars, sentences)
+- `createToolRegistry()` factory for custom tool registries
+- `defaultToolRegistry` with all built-in tools
+- `validateTool()` for validating custom tool definitions
+- `wrapToolFunction()` for error handling in tool execution
+- `getToolsHelp()` for generating help documentation
+- `SandboxConfig` updated to accept:
+  - `tools` - Array of custom tools to inject
+  - `toolRegistry` - Custom tool registry to use
+  - `includeBuiltinTools` - Whether to include built-in tools (default: true)
+- 65 new unit tests for sandbox tools
+
+#### Extended Thinking for Claude 4.5 (Phase 9.1)
+- New `ExtendedThinkingConfig` interface with `enabled` and `budgetTokens` options
+- Added `extendedThinking` option to `RLMOptions` for enabling thinking mode
+- Updated `CompletionOptions` with `thinking` configuration
+- Updated `CompletionResult` with optional `thinking` content field
+- Updated `StreamChunk` with `type` field ('text' | 'thinking')
+- Added `extended_thinking` event type to `RLMStreamEvent`
+- Added `ExtendedThinkingEventData` interface for streaming events
+- Added `ExtendedThinkingTrace` interface for execution traces
+- Updated `AnthropicClient` to:
+  - Detect Claude 4.5 models that support extended thinking
+  - Pass thinking configuration to Anthropic API
+  - Handle thinking blocks in responses
+  - Stream thinking content in `streamCompletion()`
+- Updated `RLMExecutor` to pass thinking options and log thinking traces
+- Updated `RLMStreamingExecutor` to emit `extended_thinking` events
+- Added `logExtendedThinking()` method to `RLMLogger`
+- 22 new unit tests for extended thinking functionality
+
+#### Multimodal Support (Phase 9.2)
+- New multimodal content types for vision capabilities:
+  - `TextContent` interface for text parts
+  - `ImageContent` interface for image parts (base64 and URL)
+  - `MessageContent` type union for string or array of content parts
+  - `ImageMediaType` type for supported formats (jpeg, png, gif, webp)
+- Helper functions for multimodal content:
+  - `isMultimodalContent()` - Check if content is multimodal
+  - `isImageContent()` - Check if part is an image
+  - `isTextContent()` - Check if part is text
+  - `getTextFromContent()` - Extract text from any content
+  - `getImagesFromContent()` - Extract images from content
+- Updated all LLM clients for multimodal support:
+  - OpenAI client with vision support (GPT-4o)
+  - Anthropic client with vision support (Claude)
+  - Google client with vision support (Gemini)
+- New image utilities module (`src/utils/images.ts`):
+  - `loadImage()` - Load image from file path
+  - `createImageContent()` - Create ImageContent from file
+  - `createImageContentFromUrl()` - Create from URL
+  - `createImageContentFromBase64()` - Create from base64 data
+  - `detectMediaType()` - Detect MIME type from file extension
+  - `isSupportedMediaType()` - Validate media type
+  - `estimateImageTokens()` - Estimate token cost for images
+  - `validateImageContent()` - Validate image content structure
+  - `summarizeImageContent()` - Get human-readable summary
+- 46 new unit tests for multimodal functionality
+
+#### Semantic Chunking with Embeddings (Phase 9.3)
+- New `src/embeddings/` module for embedding-based text processing
+- Embedding client implementations:
+  - `OpenAIEmbeddingClient` - text-embedding-3-small/large, ada-002
+  - `GoogleEmbeddingClient` - text-embedding-004/005
+  - `createEmbeddingClient()` factory for auto-detecting provider
+  - `detectEmbeddingProvider()` for model-based provider detection
+- Chunking strategies (`src/embeddings/semantic-chunking.ts`):
+  - `chunkFixed()` - Fixed-size windowed chunking with overlap
+  - `chunkBySentences()` - Sentence-aware chunking respecting size limits
+  - `chunkByParagraphs()` - Paragraph-aware chunking with sentence fallback
+  - `chunkSemantic()` - Embedding-based semantic boundary detection
+  - `chunkText()` - Main entry point with strategy selection
+- Text splitting utilities:
+  - `splitIntoSentences()` - Split on sentence-ending punctuation
+  - `splitIntoParagraphs()` - Split on paragraph boundaries
+  - `estimateTokenCount()` - Approximate token estimation
+- Vector similarity operations (`src/embeddings/similarity.ts`):
+  - `cosineSimilarity()` - Calculate cosine similarity
+  - `euclideanDistance()` - Calculate Euclidean distance
+  - `dotProduct()` - Calculate dot product
+  - `normalizeVector()` - Normalize to unit length
+  - `averageVectors()` - Average multiple vectors
+- Vector store implementation:
+  - `MemoryVectorStore` - In-memory brute-force similarity search
+  - `createMemoryVectorStore()` factory function
+  - `findSimilarChunks()` - Find similar chunks from array
+  - `rerankBySimilarity()` - Reorder chunks by query similarity
+- `embedChunks()` - Add embeddings to existing chunks
+- Full TypeScript type definitions:
+  - `EmbeddingClient`, `EmbeddingModel`, `EmbeddingProvider`
+  - `TextChunk`, `ChunkStrategy`, `SemanticChunkOptions`
+  - `SimilarityResult`, `VectorStore`, `VectorStoreOptions`
+- 52 new unit tests for embeddings module
+
+#### Session Persistence (Phase 9.4)
+- New `src/session.ts` module for session management and persistence
+- Core types:
+  - `RLMSession` - Complete session state including query, context, config, checkpoint, sandbox, trace, and cost
+  - `SessionStatus` - Session lifecycle states (created, running, paused, completed, failed, interrupted)
+  - `ExecutionCheckpoint` - Resumable execution state (iteration, depth, messages)
+  - `SandboxSnapshot` - Sandbox variables and output
+  - `SessionCost` - Token usage and cost accumulator with per-call breakdown
+  - `SessionMetadata` - Name, description, and tags for organization
+- Session factory and persistence:
+  - `createSession()` - Create new session with query, context, and config
+  - `saveSession()` - Save session to JSON file with pretty-print and context externalization
+  - `loadSession()` - Load session with validation and external context support
+  - `validateSession()` - Validate session structure
+- Session state management functions:
+  - `updateSessionStatus()` - Update status with automatic timestamp handling
+  - `updateSessionCheckpoint()` - Update execution checkpoint
+  - `updateSessionSandbox()` - Update sandbox variables and output
+  - `addSessionTrace()` - Append trace entries
+  - `updateSessionCost()` - Accumulate cost with call breakdown
+  - `completeSession()` - Mark session complete with result
+  - `failSession()` - Mark session failed with error details
+- `SessionManager` class for multi-session handling:
+  - `create()`, `save()`, `load()` - Basic CRUD operations
+  - `exists()`, `delete()` - File management
+  - `list()` - List all sessions with sorting
+  - `find()` - Filter sessions by status, model, tags
+  - `getResumable()` - Get sessions that can be resumed
+  - `cleanup()` - Delete old completed sessions by age
+- Utility functions:
+  - `canResumeSession()` - Check if session is resumable
+  - `getSessionProgress()` - Get progress percentage and stats
+  - `exportSession()` / `importSession()` - Portable JSON format
+  - `createSessionId()` - Deterministic ID from query and date
+- Large context externalization (saves to separate .context.txt file)
+- 65 new unit tests for session persistence
+
+#### OpenAI Responses API Integration (Phase 9.5)
+- New `src/clients/openai-responses.ts` module for OpenAI's Responses API
+- Supports built-in tools: web search, file search, code interpreter
+- `OpenAIResponsesClient` class with:
+  - `create()` - Create response with tools enabled
+  - `createStream()` - Streaming responses with real-time events
+  - `webSearch()` - Convenience method for web search queries
+  - `fileSearch()` - Search files in vector stores
+  - `continue()` - Continue conversations using previous_response_id
+- Comprehensive type definitions:
+  - `ResponsesModel` - Supported models (GPT-5, GPT-4.1, GPT-4o series)
+  - `WebSearchTool`, `FileSearchTool`, `CodeInterpreterTool`, `FunctionTool`
+  - `UrlCitation`, `FileCitation` - Citation annotation types
+  - `ResponsesResult` - Complete response with output, citations, usage
+  - `ResponsesStreamEvent` - Streaming event types
+- Citation handling utilities:
+  - `extractCitationUrls()` - Extract unique URLs from citations
+  - `extractCitationFileIds()` - Extract unique file IDs
+  - `formatCitationsAsFootnotes()` - Format as markdown footnotes
+- Tool helper functions:
+  - `webSearchTool()` - Create web search configuration
+  - `fileSearchTool()` - Create file search configuration
+  - `supportsResponsesAPI()` - Check if model supports Responses API
+- 33 new unit tests for Responses API
+
+#### Practical Examples (Phase 10)
+- 7 comprehensive examples demonstrating real-world RLM applications:
+  - `code-analysis.ts` - Security vulnerability detection, code smells, refactoring suggestions
+    - Multi-language support (TypeScript, Python, Go)
+    - Recursive codebase scanning with configurable ignore patterns
+    - Generates markdown reports with categorized findings
+  - `pdf-processing.ts` - PDF document processing and analysis
+    - Q&A mode for answering questions about PDF content
+    - Data extraction mode for tables and structured data
+    - Summarization mode for executive summaries
+    - Sample document included for demo without pdf-parse
+  - `data-extraction.ts` - Structured data extraction from unstructured text
+    - JSON schema-based extraction with configurable schemas
+    - CSV output generation for tabular data
+    - Entity extraction (people, organizations, dates, currencies, etc.)
+    - Sample documents: invoices, job postings, meeting notes
+  - `comparative-analysis.ts` - Multi-document comparison and analysis
+    - Similarity and difference identification
+    - Conflict detection across sources
+    - Comparison matrix generation
+    - Sample datasets: cloud providers, products
+  - `research-assistant.ts` - Research synthesis with citations
+    - Multi-source information synthesis
+    - Citation tracking and bibliography generation
+    - Follow-up question support
+    - Confidence-rated findings
+  - `log-analysis.ts` - Log file analysis and incident investigation
+    - Support for Apache, nginx, and application log formats
+    - Error pattern detection with severity classification
+    - Anomaly detection (spikes, drops, unusual patterns)
+    - Timeline reconstruction and root cause analysis
+  - `contract-review.ts` - Contract analysis and risk assessment
+    - Key clause identification with risk levels
+    - Obligation and deadline extraction
+    - Risky term flagging with mitigation suggestions
+    - Sample contracts: SaaS, NDA, Employment
+- All examples include:
+  - Command-line argument parsing
+  - Sample data for immediate testing
+  - Structured JSON output parsing
+  - Markdown report generation
+  - Execution statistics (tokens, cost, time)
+
+#### Comprehensive Test Suite (Phase 11)
+- 7 new test files with 175 new tests (670 total):
+  - `google-client.test.ts` (32 tests) - Google Gemini client testing
+    - Basic completion and streaming
+    - System message handling and multi-turn conversation
+    - Token usage tracking
+    - Error handling and rate limits
+    - Mock API responses
+  - `pricing.test.ts` (36 tests) - Model pricing validation
+    - All 40+ models have pricing defined
+    - Cost calculation accuracy
+    - Edge cases (zero tokens, large counts)
+    - Unknown model handling
+  - `stress.test.ts` (22 tests) - Large context stress testing
+    - 10K, 50K, 100K token context handling
+    - Context chunking efficiency benchmarks
+    - Memory usage monitoring
+    - Concurrent operations
+    - Edge cases (empty, whitespace, special characters)
+  - `streaming.test.ts` (17 tests) - Streaming functionality
+    - RLM streaming events (start, code, code_output, final, done)
+    - Stream cancellation
+    - Error recovery
+    - Event ordering verification
+    - Multiple concurrent streams
+  - `rate-limit.test.ts` (26 tests) - Rate limiting
+    - Token bucket exhaustion
+    - Request rate limiting
+    - Concurrent request handling
+    - Provider-specific limits (OpenAI, Anthropic)
+    - Token usage recording
+    - withRateLimit wrapper
+  - `batch-concurrent.test.ts` (20 tests) - Batch processing
+    - Basic batch processing
+    - Concurrent execution
+    - Mixed success/failure handling
+    - Progress callback accuracy
+    - Retry logic with rate limiting
+  - `e2e.test.ts` (22 tests) - End-to-end integration
+    - Full RLM workflow with mocks
+    - Multi-iteration execution
+    - Recursive sub-queries
+    - FINAL and FINAL_VAR handling
+    - Error recovery scenarios
+    - Timeout handling
+    - Cost tracking accuracy
+    - Streaming integration
+
 ### Planned
 - Performance benchmarks
 - Additional examples for new models
-- Extended thinking mode support for Claude 4.5
+- CLI `--image` flag for multimodal queries
+- CLI `--chunk-strategy` flag for chunking options
+- CLI `--session` flag for session resume
+- Integration of embeddings with RLM context processing
+- Session integration with RLMExecutor for automatic checkpointing

@@ -7,6 +7,16 @@ import type {
 } from '../types.js';
 
 /**
+ * Token count result from countTokens().
+ */
+export interface TokenCount {
+  /** Number of tokens in the input */
+  tokens: number;
+  /** Method used to count tokens */
+  method: 'heuristic' | 'tokenizer' | 'api';
+}
+
+/**
  * Base interface for LLM clients.
  * All provider-specific clients must implement this interface.
  */
@@ -30,6 +40,12 @@ export interface LLMClient {
     messages: Message[],
     options?: CompletionOptions
   ): AsyncGenerator<StreamChunk, CompletionResult, unknown>;
+
+  /**
+   * Count tokens for a string or message array.
+   * Uses heuristics by default, but specific clients may use tokenizers or API calls.
+   */
+  countTokens(input: string | Message[]): TokenCount;
 }
 
 /**
