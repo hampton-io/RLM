@@ -18,13 +18,27 @@ RLM enables LLMs to process **arbitrarily long contexts** by treating them as an
 ## Installation
 
 ```bash
-npm install rlm
+# Clone the repository
+git clone https://github.com/hampton-io/RLM.git
+cd RLM
+
+# Install dependencies
+npm install
+
+# Build
+npm run build
+```
+
+Or install directly from GitHub:
+
+```bash
+npm install github:hampton-io/RLM
 ```
 
 ## Quick Start
 
 ```typescript
-import { RLM } from 'rlm';
+import { RLM } from './src/index.js';  // or 'rlm' if installed from GitHub
 
 // Set your API key
 process.env.OPENAI_API_KEY = 'your-key-here';
@@ -191,7 +205,7 @@ for await (const event of rlm.stream(query, context)) {
 ### Custom LLM Client with Retry Logic
 
 ```typescript
-import { RLMExecutor, createClient, ResilientClient } from 'rlm';
+import { createClient, ResilientClient } from './src/index.js';
 
 // Create a resilient client with retry logic
 const baseClient = createClient('gpt-4o-mini', {
@@ -208,7 +222,7 @@ const resilientClient = new ResilientClient(baseClient, {
 ### Cost Tracking
 
 ```typescript
-import { RLM, CostTracker, BudgetExceededError } from 'rlm';
+import { RLM, CostTracker, BudgetExceededError } from './src/index.js';
 
 const costTracker = new CostTracker({
   maxBudget: 1.00,  // $1.00 maximum
@@ -229,7 +243,7 @@ try {
 ### Rate Limiting
 
 ```typescript
-import { RateLimiter, withRateLimit } from 'rlm';
+import { RateLimiter, withRateLimit } from './src/index.js';
 
 const limiter = new RateLimiter({
   requestsPerMinute: 60,
@@ -246,7 +260,7 @@ const rateLimitedFn = withRateLimit(
 ### Trace Logging
 
 ```typescript
-import { RLM, TraceReporter, createFileReporter } from 'rlm';
+import { RLM, createFileReporter } from './src/index.js';
 
 // Create a file reporter for JSONL output
 const reporter = createFileReporter('./traces', {
