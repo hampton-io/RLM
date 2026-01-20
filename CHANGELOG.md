@@ -465,6 +465,59 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Cost tracking accuracy
     - Streaming integration
 
+#### Claude Code Plugin / MCP Server (Phase 12)
+- New `mcp-server/` package - Model Context Protocol server for Claude Code integration
+- MCP Server core (`src/server.ts`):
+  - Full JSON-RPC 2.0 protocol implementation
+  - Tool and resource management
+  - Notification support
+  - Health check (ping/pong)
+- Codebase Indexer (`src/indexer/`):
+  - File discovery with gitignore support
+  - Symbol extraction for 14 programming languages
+  - Chunk-based indexing with configurable size/overlap
+  - Embedding integration interface
+  - Incremental re-indexing on file changes
+  - JSON-based index persistence
+- Semantic Code Search (`src/search/`):
+  - Natural language queries over codebase
+  - Keyword and semantic (embedding-based) matching
+  - Symbol search with camelCase matching
+  - Configurable filters (language, path, chunk type)
+  - Result ranking by relevance
+- MCP Tools implemented:
+  - `index_codebase` - Index the codebase for search
+  - `get_index_status` - Get current index status
+  - `search_code` - Natural language code search
+  - `explain_code` - Explain files, functions, or code ranges
+  - `find_usages` - Find all usages of a symbol
+  - `analyze_dependencies` - Analyze imports/exports, detect circular deps
+- Additional tool definitions:
+  - `summarize_module` - Summarize entire modules
+  - `find_security_issues` - Detect security vulnerabilities
+  - `suggest_refactoring` - Suggest code improvements
+  - `get_context` - Get relevant context for a file
+  - `answer_question` - Answer questions about codebase
+  - `generate_tests` - Generate unit tests
+- Real-time Features (`src/watcher/`):
+  - File system watcher with debouncing
+  - Automatic index updates on file changes
+  - Integration with indexer for incremental updates
+- Language Support:
+  - TypeScript, JavaScript, Python, Go, Rust
+  - Java, Kotlin, C, C++, C#, Ruby, PHP, Swift
+  - Language-specific symbol extraction patterns
+  - Comment detection and documentation extraction
+- Claude Code Integration:
+  - `claude-code.json` manifest with commands and keybindings
+  - Command palette integration (Index, Search, Explain, Find Usages, Analyze)
+  - Keyboard shortcuts (Cmd/Ctrl+Shift+F for search, etc.)
+- Test Suite:
+  - `server.test.ts` - MCP server protocol tests
+  - `indexer.test.ts` - Codebase indexing tests
+  - `search.test.ts` - Search engine tests
+  - `language.test.ts` - Language detection and symbol extraction tests
+
 ### Planned
 - Performance benchmarks
 - Additional examples for new models

@@ -1,0 +1,177 @@
+{
+  "$schema": "https://raw.githubusercontent.com/anthropics/claude-code/main/schemas/mcp-server.schema.json",
+  "name": "rlm-code-assistant",
+  "displayName": "RLM Code Assistant",
+  "description": "Semantic code search and analysis powered by Recursive Language Models",
+  "version": "1.0.0",
+  "author": "RLM Project",
+  "homepage": "https://github.com/yourusername/rlm",
+  "repository": "https://github.com/yourusername/rlm",
+  "license": "MIT",
+  "icon": "code",
+  "categories": [
+    "code-analysis",
+    "search",
+    "documentation"
+  ],
+  "keywords": [
+    "code-search",
+    "semantic-search",
+    "code-analysis",
+    "dependency-analysis",
+    "code-understanding"
+  ],
+  "command": "node",
+  "args": [
+    "${serverPath}/dist/index.js"
+  ],
+  "env": {
+    "OPENAI_API_KEY": "${env:OPENAI_API_KEY}"
+  },
+  "capabilities": {
+    "tools": true,
+    "resources": true,
+    "prompts": false
+  },
+  "tools": [
+    {
+      "name": "index_codebase",
+      "description": "Index the codebase for semantic search",
+      "category": "setup"
+    },
+    {
+      "name": "get_index_status",
+      "description": "Get the current status of the codebase index",
+      "category": "info"
+    },
+    {
+      "name": "search_code",
+      "description": "Search code using natural language",
+      "category": "search"
+    },
+    {
+      "name": "explain_code",
+      "description": "Explain code files, functions, or selections",
+      "category": "analysis"
+    },
+    {
+      "name": "find_usages",
+      "description": "Find all usages of a symbol",
+      "category": "search"
+    },
+    {
+      "name": "analyze_dependencies",
+      "description": "Analyze import/export dependencies",
+      "category": "analysis"
+    }
+  ],
+  "configuration": {
+    "properties": {
+      "rootPath": {
+        "type": "string",
+        "description": "Root path of the codebase to analyze",
+        "default": "."
+      },
+      "watchFiles": {
+        "type": "boolean",
+        "description": "Enable real-time file watching",
+        "default": true
+      },
+      "embeddingProvider": {
+        "type": "string",
+        "description": "Provider for embeddings",
+        "enum": ["openai", "google", "local"],
+        "default": "openai"
+      },
+      "ignorePatterns": {
+        "type": "array",
+        "description": "Glob patterns for files to ignore",
+        "items": {
+          "type": "string"
+        },
+        "default": [
+          "node_modules/**",
+          ".git/**",
+          "dist/**",
+          "build/**"
+        ]
+      }
+    }
+  },
+  "activation": {
+    "onStartup": false,
+    "onCommand": [
+      "rlm.indexCodebase",
+      "rlm.searchCode",
+      "rlm.explainCode",
+      "rlm.findUsages",
+      "rlm.analyzeDependencies"
+    ],
+    "languages": [
+      "typescript",
+      "javascript",
+      "python",
+      "go",
+      "rust",
+      "java",
+      "kotlin",
+      "c",
+      "cpp"
+    ]
+  },
+  "commands": [
+    {
+      "command": "rlm.indexCodebase",
+      "title": "RLM: Index Codebase",
+      "description": "Index the current codebase for semantic search"
+    },
+    {
+      "command": "rlm.searchCode",
+      "title": "RLM: Search Code",
+      "description": "Search code using natural language"
+    },
+    {
+      "command": "rlm.explainCode",
+      "title": "RLM: Explain Selection",
+      "description": "Explain the selected code"
+    },
+    {
+      "command": "rlm.findUsages",
+      "title": "RLM: Find Usages",
+      "description": "Find all usages of the symbol under cursor"
+    },
+    {
+      "command": "rlm.analyzeDependencies",
+      "title": "RLM: Analyze Dependencies",
+      "description": "Analyze file and module dependencies"
+    }
+  ],
+  "keybindings": [
+    {
+      "command": "rlm.searchCode",
+      "key": "ctrl+shift+f",
+      "mac": "cmd+shift+f"
+    },
+    {
+      "command": "rlm.explainCode",
+      "key": "ctrl+shift+e",
+      "mac": "cmd+shift+e"
+    },
+    {
+      "command": "rlm.findUsages",
+      "key": "ctrl+shift+u",
+      "mac": "cmd+shift+u"
+    }
+  ],
+  "requirements": {
+    "node": ">=18.0.0"
+  },
+  "installInstructions": [
+    "1. Clone or download the RLM repository",
+    "2. Navigate to the mcp-server directory",
+    "3. Run 'npm install' to install dependencies",
+    "4. Run 'npm run build' to build the server",
+    "5. Configure Claude Code to use this MCP server",
+    "6. Set OPENAI_API_KEY environment variable for embeddings (optional)"
+  ]
+}
