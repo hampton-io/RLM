@@ -1,0 +1,32 @@
+import type { SupportedModel, ModelProvider, OpenAIModel, AnthropicModel } from '../types.js';
+import type { LLMClient, LLMClientConfig } from './types.js';
+import { detectProvider } from './types.js';
+import { OpenAIClient } from './openai.js';
+import { AnthropicClient } from './anthropic.js';
+
+export type { LLMClient, LLMClientConfig } from './types.js';
+export { OpenAIClient } from './openai.js';
+export { AnthropicClient } from './anthropic.js';
+export { calculateCost, detectProvider, MODEL_PRICING } from './types.js';
+export { ResilientClient, createResilientClient, withLLMRetry } from './resilient-client.js';
+export type { ResilientClientOptions } from './resilient-client.js';
+
+/**
+ * Create an LLM client for the specified model.
+ * Automatically detects the provider from the model name.
+ */
+export function createClient(
+  model: SupportedModel,
+  config: LLMClientConfig & { provider?: ModelProvider } = {}
+): LLMClient {
+  const provider = config.provider ?? detectProvider(model);
+
+  switch (provider) {
+    case 'openai':
+      return new OpenAIClient(model as OpenAIModel, config);
+    case 'anthropic':
+      return new AnthropicClient(model as AnthropicModel, config);
+    default:
+      throw new Error(`Unsupported provider: ${provider}`);
+  }
+}

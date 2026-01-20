@@ -1,0 +1,350 @@
+import type {
+  Message,
+  RLMOptions,
+  RLMResult,
+  RLMStreamEvent,
+  SandboxEnvironment,
+} from './types.js';
+import type { LLMClient } from './clients/types.js';
+import { createClient, calculateCost } from './clients/index.js';
+import { createSandbox } from './sandbox/index.js';
+import { getSystemPrompt, createUserPrompt } from './prompts/index.js';
+import {
+  parseLLMOutput,
+  maxIterationsError,
+  wrapError,
+  isRLMError,
+} from './utils/index.js';
+import { RLMLogger } from './logger/index.js';
+
+/**
+ * Default RLM options.
+ */
+const DEFAULT_OPTIONS: Required<Omit<RLMOptions, 'apiKey' | 'provider'>> = {
+  model: 'gpt-4o-mini',
+  maxIterations: 20,
+  maxDepth: 1,
+  sandboxTimeout: 30000,
+  verbose: false,
+  temperature: 0,
+};
+
+/**
+ * RLM Streaming Executor - yields events as they occur during execution.
+ */
+export class RLMStreamingExecutor {
+  private options: Required<Omit<RLMOptions, 'apiKey' | 'provider'>> & Pick<RLMOptions, 'apiKey' | 'provider'>;
+  private client: LLMClient;
+  private logger: RLMLogger;
+
+  constructor(options: RLMOptions) {
+    this.options = {
+      ...DEFAULT_OPTIONS,
+      ...options,
+    };
+
+    this.client = createClient(this.options.model, {
+      apiKey: this.options.apiKey,
+      provider: this.options.provider,
+    });
+
+    this.logger = new RLMLogger(this.options.verbose);
+  }
+
+  /**
+   * Execute an RLM completion with streaming events.
+   */
+  async *executeStream(
+    query: string,
+    context: string = ''
+  ): AsyncGenerator<RLMStreamEvent, RLMResult, unknown> {
+    const startTime = Date.now();
+    this.logger.clear();
+
+    // Emit start event
+    yield this.createEvent('start', {
+      query,
+      contextLength: context.length,
+    });
+
+    // Create sandbox with context and LLM query callback
+    const sandbox = await this.createSandboxWithCallbacks(context, 0);
+
+    try {
+      // Build initial messages
+      const messages: Message[] = [
+        { role: 'system', content: getSystemPrompt() },
+        { role: 'user', content: createUserPrompt(query, context.length) },
+      ];
+
+      let iteration = 0;
+      let finalAnswer: string | null = null;
+      let finalMethod: 'FINAL' | 'FINAL_VAR' = 'FINAL';
+
+      // Main execution loop
+      while (iteration < this.options.maxIterations) {
+        iteration++;
+
+        // Get LLM response
+        const completion = await this.client.completion(messages, {
+          temperature: this.options.temperature,
+        });
+
+        this.logger.logLLMCall(0, messages, completion.content, completion.usage);
+
+        // Parse the response
+        const parsed = parseLLMOutput(completion.content);
+
+        // Emit thinking event if there's text before code
+        if (parsed.thinking) {
+          yield this.createEvent('thinking', {
+            content: parsed.thinking,
+            iteration,
+          });
+        }
+
+        // Check for final answer
+        if (parsed.final) {
+          if (parsed.final.type === 'FINAL') {
+            finalAnswer = parsed.final.value;
+            finalMethod = 'FINAL';
+          } else if (parsed.final.type === 'FINAL_VAR') {
+            const varValue = sandbox.getVariable(parsed.final.value);
+            finalAnswer = this.stringify(varValue);
+            finalMethod = 'FINAL_VAR';
+          }
+
+          this.logger.logFinalOutput(
+            0,
+            finalAnswer ?? '',
+            parsed.final.type,
+            parsed.final.type === 'FINAL_VAR' ? parsed.final.value : undefined
+          );
+
+          // Emit final event
+          yield this.createEvent('final', {
+            response: finalAnswer ?? '',
+            method: finalMethod,
+          });
+
+          break;
+        }
+
+        // If there's code to execute
+        if (parsed.code) {
+          // Emit code event
+          yield this.createEvent('code', {
+            code: parsed.code,
+            iteration,
+          });
+
+          const result = await sandbox.execute(parsed.code);
+
+          this.logger.logCodeExecution(
+            0,
+            parsed.code,
+            result.output,
+            result.executionTime,
+            result.error
+          );
+
+          // Emit code output event
+          yield this.createEvent('code_output', {
+            output: result.output,
+            error: result.error,
+            iteration,
+          });
+
+          // Add assistant message with the code
+          messages.push({
+            role: 'assistant',
+            content: completion.content,
+          });
+
+          // Add execution result as user message
+          const executionFeedback = this.formatExecutionResult(result.output, result.error);
+          messages.push({
+            role: 'user',
+            content: executionFeedback,
+          });
+        } else {
+          // No code and no final answer - the model might be thinking
+          messages.push({
+            role: 'assistant',
+            content: completion.content,
+          });
+          messages.push({
+            role: 'user',
+            content: 'Please write code to explore the context or provide your final answer using FINAL("answer").',
+          });
+        }
+      }
+
+      // Check if we got an answer
+      if (finalAnswer === null) {
+        const error = maxIterationsError(this.options.maxIterations);
+        yield this.createEvent('error', {
+          message: error.message,
+          code: error.code,
+        });
+        throw error;
+      }
+
+      // Calculate total usage and cost
+      const totalUsage = this.logger.getTotalUsage();
+      const totalCost = calculateCost(this.options.model, totalUsage);
+
+      const result: RLMResult = {
+        response: finalAnswer,
+        trace: this.logger.getEntries(),
+        usage: {
+          totalTokens: totalUsage.totalTokens,
+          totalCalls: this.logger.getCallCount(),
+          estimatedCost: totalCost,
+        },
+        executionTime: Date.now() - startTime,
+      };
+
+      // Emit done event
+      yield this.createEvent('done', {
+        usage: result.usage,
+        executionTime: result.executionTime,
+      });
+
+      return result;
+    } catch (error) {
+      const wrapped = wrapError(error);
+
+      yield this.createEvent('error', {
+        message: wrapped.message,
+        code: isRLMError(error) ? error.code : undefined,
+      });
+
+      throw wrapped;
+    } finally {
+      sandbox.dispose();
+    }
+  }
+
+  /**
+   * Create a sandbox with LLM query callbacks that emit events.
+   */
+  private async createSandboxWithCallbacks(
+    context: string,
+    depth: number
+  ): Promise<SandboxEnvironment> {
+    return createSandbox('vm', {
+      context,
+      options: {
+        timeout: this.options.sandboxTimeout,
+      },
+      onLLMQuery: async (prompt: string, subContext?: string) => {
+        return this.handleSubQuery(prompt, subContext ?? context, depth + 1);
+      },
+      onLLMQueryParallel: async (queries) => {
+        const results = await Promise.all(
+          queries.map((q) =>
+            this.handleSubQuery(q.prompt, q.context ?? context, depth + 1)
+          )
+        );
+        return results;
+      },
+    });
+  }
+
+  /**
+   * Handle a sub-LLM query from within the sandbox.
+   */
+  private async handleSubQuery(
+    prompt: string,
+    subContext: string,
+    depth: number
+  ): Promise<string> {
+    if (depth > this.options.maxDepth) {
+      return `[Error: Maximum recursion depth (${this.options.maxDepth}) exceeded]`;
+    }
+
+    try {
+      const messages: Message[] = [
+        {
+          role: 'system',
+          content: 'You are a helpful assistant. Answer the question based on the provided context. Be concise and direct.',
+        },
+        {
+          role: 'user',
+          content: `Context:\n${subContext}\n\nQuestion: ${prompt}`,
+        },
+      ];
+
+      const completion = await this.client.completion(messages, {
+        temperature: this.options.temperature,
+      });
+
+      this.logger.logSubLLMCall(
+        depth,
+        prompt,
+        subContext.length,
+        completion.content,
+        completion.usage
+      );
+
+      return completion.content;
+    } catch (error) {
+      const wrapped = wrapError(error);
+      this.logger.logError(depth, wrapped.message, wrapped.stack);
+      return `[Error: ${wrapped.message}]`;
+    }
+  }
+
+  /**
+   * Create a stream event.
+   */
+  private createEvent<T extends RLMStreamEvent['type']>(
+    type: T,
+    data: Extract<RLMStreamEvent, { type: T }>['data']
+  ): Extract<RLMStreamEvent, { type: T }> {
+    return {
+      type,
+      timestamp: Date.now(),
+      data,
+    } as Extract<RLMStreamEvent, { type: T }>;
+  }
+
+  /**
+   * Format execution result for feedback to the LLM.
+   */
+  private formatExecutionResult(output: string, error?: string): string {
+    let feedback = '';
+
+    if (output) {
+      feedback += `Output:\n${output}\n`;
+    }
+
+    if (error) {
+      feedback += `Error:\n${error}\n`;
+    }
+
+    if (!output && !error) {
+      feedback = 'Code executed successfully with no output.';
+    }
+
+    return feedback;
+  }
+
+  /**
+   * Stringify a value for output.
+   */
+  private stringify(value: unknown): string {
+    if (value === undefined) return 'undefined';
+    if (value === null) return 'null';
+    if (typeof value === 'string') return value;
+    if (typeof value === 'object') {
+      try {
+        return JSON.stringify(value, null, 2);
+      } catch {
+        return String(value);
+      }
+    }
+    return String(value);
+  }
+}
