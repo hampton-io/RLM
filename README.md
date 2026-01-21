@@ -97,6 +97,18 @@ npx tsx src/cli.ts -f document.txt --template extract --template-vars "schema={n
 
 # List available templates
 npx tsx src/cli.ts --list-templates
+
+# Use semantic chunking for large documents
+npx tsx src/cli.ts "Summarize" -f large.txt --chunk-strategy semantic
+
+# Analyze an image (multimodal)
+npx tsx src/cli.ts "Describe this chart" --image chart.png -m claude-sonnet-4-5
+
+# Create a new session for long tasks
+npx tsx src/cli.ts "Analyze this codebase" -f code.txt --session new
+
+# Resume an existing session
+npx tsx src/cli.ts --session abc123-def456
 ```
 
 ### CLI Options
@@ -120,6 +132,9 @@ Options:
   --template <id>                Use a built-in prompt template
   --template-vars <vars>         Template variables (key=value,key2=value2)
   --list-templates               List available templates
+  --chunk-strategy <type>        Chunking strategy: fixed, semantic, sentence, paragraph
+  -i, --image <path>             Path to image file for multimodal queries
+  --session <id>                 Session ID to resume, or "new" to create one
   -h, --help                     Show help message
 ```
 
@@ -672,6 +687,7 @@ Add to your Claude Code configuration (`~/.claude/claude_desktop_config.json`):
 | `explain_code` | Get explanations of code files, functions, or ranges |
 | `find_usages` | Find all usages of a symbol |
 | `analyze_dependencies` | Analyze imports/exports, detect circular dependencies |
+| `find_security_issues` | Scan for security vulnerabilities (secrets, injection, XSS, etc.) |
 
 ### Example Workflows
 
@@ -692,7 +708,7 @@ See the [MCP Server README](./mcp-server/README.md) for full documentation.
 # Install dependencies
 npm install
 
-# Run tests (751 tests total: 670 core + 81 MCP server)
+# Run tests (765 tests total: 670 core + 95 MCP server)
 npm test
 
 # Run tests once
