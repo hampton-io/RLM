@@ -620,13 +620,79 @@ npx tsx examples/data-extraction.ts --sample
 npx tsx examples/log-analysis.ts --sample
 ```
 
+## Claude Code Integration (MCP Server)
+
+RLM includes an MCP (Model Context Protocol) server that integrates with Claude Code for semantic code search and analysis directly in your IDE.
+
+### MCP Server Features
+
+- **Semantic Code Search**: Search your codebase using natural language queries
+- **Code Explanation**: Get detailed explanations of files, functions, and classes
+- **Usage Analysis**: Find all usages of symbols across your project
+- **Dependency Analysis**: Analyze imports/exports and detect circular dependencies
+- **Real-time Updates**: Automatic index updates when files change
+- **14 Language Support**: TypeScript, JavaScript, Python, Go, Rust, Java, Kotlin, C/C++, C#, Ruby, PHP, Swift
+
+### Quick Setup
+
+```bash
+# Navigate to the mcp-server directory
+cd mcp-server
+
+# Install dependencies
+npm install
+
+# Build the server
+npm run build
+```
+
+Add to your Claude Code configuration (`~/.claude/claude_desktop_config.json`):
+
+```json
+{
+  "mcpServers": {
+    "rlm": {
+      "command": "node",
+      "args": ["/path/to/rlm/mcp-server/dist/index.js"],
+      "env": {
+        "OPENAI_API_KEY": "your-api-key"
+      }
+    }
+  }
+}
+```
+
+### Available MCP Tools
+
+| Tool | Description |
+|------|-------------|
+| `index_codebase` | Index the codebase for semantic search |
+| `get_index_status` | Get current index status and statistics |
+| `search_code` | Search code using natural language queries |
+| `explain_code` | Get explanations of code files, functions, or ranges |
+| `find_usages` | Find all usages of a symbol |
+| `analyze_dependencies` | Analyze imports/exports, detect circular dependencies |
+
+### Example Workflows
+
+The MCP server includes [comprehensive workflow documentation](./mcp-server/docs/workflows.md) for common tasks:
+
+1. **Onboarding to a New Codebase** - Quickly understand project structure and key components
+2. **Refactoring a Module** - Safe refactoring with impact analysis
+3. **Code Review** - Thorough review with pattern and dependency checks
+4. **Bug Investigation** - Trace errors to root causes
+5. **Dependency Audit** - Assess technical debt and dependency health
+6. **API Documentation** - Generate docs for public APIs
+
+See the [MCP Server README](./mcp-server/README.md) for full documentation.
+
 ## Development
 
 ```bash
 # Install dependencies
 npm install
 
-# Run tests (670 tests)
+# Run tests (751 tests total: 670 core + 81 MCP server)
 npm test
 
 # Run tests once

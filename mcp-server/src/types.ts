@@ -356,7 +356,7 @@ export const DEFAULT_CONFIG: RLMServerConfig = {
     'target/**',
     'vendor/**',
   ],
-  includePatterns: ['**/*'],
+  includePatterns: ['**'],
   languages: [
     'typescript',
     'javascript',

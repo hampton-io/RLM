@@ -168,7 +168,7 @@ export async function discoverFiles(
 ): Promise<DiscoveredFile[]> {
   const {
     ignorePatterns = [],
-    includePatterns = ['**/*'],
+    includePatterns = ['**'],
     languages,
     maxFileSize = 1024 * 1024,
     respectGitignore = true,
