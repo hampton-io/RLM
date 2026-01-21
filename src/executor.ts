@@ -1,5 +1,6 @@
 import type {
   Message,
+  MessageContent,
   RLMOptions,
   RLMCompletionOptions,
   RLMResult,
@@ -8,7 +9,7 @@ import type {
 import type { LLMClient } from './clients/types.js';
 import { createClient, calculateCost } from './clients/index.js';
 import { createSandbox } from './sandbox/index.js';
-import { getSystemPrompt, createUserPrompt } from './prompts/index.js';
+import { getSystemPrompt, createUserPrompt, createMultimodalUserPrompt } from './prompts/index.js';
 import {
   parseLLMOutput,
   maxIterationsError,
@@ -19,7 +20,7 @@ import { RLMLogger } from './logger/index.js';
 /**
  * Default RLM options.
  */
-const DEFAULT_OPTIONS: Required<Omit<RLMOptions, 'apiKey' | 'provider' | 'extendedThinking'>> = {
+const DEFAULT_OPTIONS: Required<Omit<RLMOptions, 'apiKey' | 'provider' | 'extendedThinking' | 'image'>> = {
   model: 'gpt-4o-mini',
   maxIterations: 20,
   maxDepth: 1,
@@ -32,7 +33,7 @@ const DEFAULT_OPTIONS: Required<Omit<RLMOptions, 'apiKey' | 'provider' | 'extend
  * RLM Executor - orchestrates the REPL-style execution loop.
  */
 export class RLMExecutor {
-  private options: Required<Omit<RLMOptions, 'apiKey' | 'provider' | 'extendedThinking'>> & Pick<RLMOptions, 'apiKey' | 'provider' | 'extendedThinking'>;
+  private options: Required<Omit<RLMOptions, 'apiKey' | 'provider' | 'extendedThinking' | 'image'>> & Pick<RLMOptions, 'apiKey' | 'provider' | 'extendedThinking' | 'image'>;
   private client: LLMClient;
   private logger: RLMLogger;
 
@@ -66,9 +67,13 @@ export class RLMExecutor {
 
     try {
       // Build initial messages
+      const userContent: MessageContent = this.options.image
+        ? createMultimodalUserPrompt(query, context.length, this.options.image)
+        : createUserPrompt(query, context.length);
+
       const messages: Message[] = [
         { role: 'system', content: getSystemPrompt() },
-        { role: 'user', content: createUserPrompt(query, context.length) },
+        { role: 'user', content: userContent },
       ];
 
       let iteration = 0;

@@ -20,7 +20,7 @@ import { RLMLogger } from './logger/index.js';
 /**
  * Default RLM options.
  */
-const DEFAULT_OPTIONS: Required<Omit<RLMOptions, 'apiKey' | 'provider' | 'extendedThinking'>> = {
+const DEFAULT_OPTIONS: Required<Omit<RLMOptions, 'apiKey' | 'provider' | 'extendedThinking' | 'image'>> = {
   model: 'gpt-4o-mini',
   maxIterations: 20,
   maxDepth: 1,
@@ -33,7 +33,7 @@ const DEFAULT_OPTIONS: Required<Omit<RLMOptions, 'apiKey' | 'provider' | 'extend
  * RLM Streaming Executor - yields events as they occur during execution.
  */
 export class RLMStreamingExecutor {
-  private options: Required<Omit<RLMOptions, 'apiKey' | 'provider' | 'extendedThinking'>> & Pick<RLMOptions, 'apiKey' | 'provider' | 'extendedThinking'>;
+  private options: Required<Omit<RLMOptions, 'apiKey' | 'provider' | 'extendedThinking' | 'image'>> & Pick<RLMOptions, 'apiKey' | 'provider' | 'extendedThinking' | 'image'>;
   private client: LLMClient;
   private logger: RLMLogger;
 

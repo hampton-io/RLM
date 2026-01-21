@@ -18,6 +18,8 @@ import {
   createFindUsagesHandler,
   analyzeDependenciesDefinition,
   createAnalyzeDependenciesHandler,
+  findSecurityIssuesDefinition,
+  findSecurityIssuesHandler,
   indexCodebaseDefinition,
   getIndexStatusDefinition,
 } from './tools/index.js';
@@ -76,6 +78,12 @@ export class RLMCodeAssistant {
     this.server.registerTool(
       analyzeDependenciesDefinition,
       createAnalyzeDependenciesHandler()
+    );
+
+    // Find security issues tool
+    this.server.registerTool(
+      findSecurityIssuesDefinition,
+      findSecurityIssuesHandler
     );
 
     // Index codebase tool

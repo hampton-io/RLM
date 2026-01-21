@@ -238,6 +238,8 @@ export interface RLMOptions {
   apiKey?: string;               // Override env var API key
   /** Extended thinking configuration (Claude 4.5+ only) */
   extendedThinking?: ExtendedThinkingConfig;
+  /** Image content for multimodal queries */
+  image?: ImageContent;
 }
 
 export interface RLMCompletionOptions {

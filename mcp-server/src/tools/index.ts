@@ -24,11 +24,17 @@ export {
   createAnalyzeDependenciesHandler,
 } from './analyze-dependencies.js';
 
+export {
+  findSecurityIssuesDefinition,
+  findSecurityIssuesHandler,
+} from './find-security-issues.js';
+
 import { MCPToolDefinition } from '../types.js';
 import { searchCodeDefinition } from './search-code.js';
 import { explainCodeDefinition } from './explain-code.js';
 import { findUsagesDefinition } from './find-usages.js';
 import { analyzeDependenciesDefinition } from './analyze-dependencies.js';
+import { findSecurityIssuesDefinition } from './find-security-issues.js';
 
 /**
  * All tool definitions
@@ -38,6 +44,7 @@ export const ALL_TOOL_DEFINITIONS: MCPToolDefinition[] = [
   explainCodeDefinition,
   findUsagesDefinition,
   analyzeDependenciesDefinition,
+  findSecurityIssuesDefinition,
 ];
 
 /**
@@ -100,31 +107,6 @@ export const summarizeModuleDefinition: MCPToolDefinition = {
       },
     },
     required: ['path'],
-  },
-};
-
-/**
- * Find security issues tool definition
- */
-export const findSecurityIssuesDefinition: MCPToolDefinition = {
-  name: 'find_security_issues',
-  description:
-    'Scan the codebase for common security vulnerabilities and issues.',
-  inputSchema: {
-    type: 'object',
-    properties: {
-      path: {
-        type: 'string',
-        description: 'Path to scan (default: entire codebase)',
-      },
-      severity: {
-        type: 'string',
-        description: 'Minimum severity level to report',
-        enum: ['low', 'medium', 'high', 'critical'],
-        default: 'medium',
-      },
-    },
-    required: [],
   },
 };
 

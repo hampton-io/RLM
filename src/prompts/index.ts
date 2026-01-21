@@ -1,1 +1,1 @@
-export { RLM_SYSTEM_PROMPT, getSystemPrompt, createUserPrompt } from './system.js';
+export { RLM_SYSTEM_PROMPT, getSystemPrompt, createUserPrompt, createMultimodalUserPrompt } from './system.js';

@@ -2,6 +2,8 @@
  * System prompts for the RLM REPL environment.
  */
 
+import type { MessageContent, TextContent, ImageContent } from '../types.js';
+
 export const RLM_SYSTEM_PROMPT = `You are an AI assistant with access to a JavaScript REPL environment for processing potentially very large contexts. The context has been loaded as a variable that you can access and manipulate programmatically.
 
 ## Available Variables and Functions
@@ -206,4 +208,32 @@ function getSizeDescription(chars: number): string {
   } else {
     return 'very large document, chunking required';
   }
+}
+
+/**
+ * Create a multimodal user message with text and optional image.
+ *
+ * @param query - The user's query
+ * @param contextLength - Length of the context in characters
+ * @param image - Optional image content to include
+ * @returns MessageContent that can be string or array of content parts
+ */
+export function createMultimodalUserPrompt(
+  query: string,
+  contextLength: number,
+  image?: ImageContent
+): MessageContent {
+  const textPrompt = createUserPrompt(query, contextLength);
+
+  if (!image) {
+    return textPrompt;
+  }
+
+  // Return multimodal content with image first, then text
+  const content: (TextContent | ImageContent)[] = [
+    image,
+    { type: 'text', text: textPrompt },
+  ];
+
+  return content;
 }

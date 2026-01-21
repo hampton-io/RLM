@@ -2,16 +2,19 @@
 
 import { readFileSync, existsSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { randomUUID } from 'node:crypto';
 import { RLM } from './rlm.js';
 import { hasValidCredentials, getConfigSummary, resolveConfig } from './config.js';
-import { estimateTotalCost, formatCostEstimate, compareCosts } from './utils/tokens.js';
+import { estimateTotalCost, formatCostEstimate, compareCosts, createImageContent } from './utils/index.js';
 import {
   render,
   getTemplateHelp,
   parseTemplateVars,
   listTemplateIds,
 } from './templates/index.js';
-import type { SupportedModel } from './types.js';
+import { SessionManager, createSession, completeSession, failSession } from './session.js';
+import type { SupportedModel, ImageContent } from './types.js';
+import type { ChunkStrategy } from './embeddings/types.js';
 
 /**
  * CLI for testing RLM.
@@ -38,6 +41,9 @@ interface CLIOptions {
   template?: string;
   templateVars?: string;
   listTemplates?: boolean;
+  chunkStrategy?: ChunkStrategy;
+  imagePath?: string;
+  session?: string;
 }
 
 function parseArgs(args: string[]): CLIOptions {
@@ -77,6 +83,17 @@ function parseArgs(args: string[]): CLIOptions {
       options.templateVars = args[++i];
     } else if (arg === '--list-templates') {
       options.listTemplates = true;
+    } else if (arg === '--chunk-strategy') {
+      const strategy = args[++i];
+      if (!['fixed', 'semantic', 'sentence', 'paragraph'].includes(strategy)) {
+        console.error(`Error: Invalid chunk strategy "${strategy}". Must be: fixed, semantic, sentence, paragraph`);
+        process.exit(1);
+      }
+      options.chunkStrategy = strategy as ChunkStrategy;
+    } else if (arg === '--image' || arg === '-i') {
+      options.imagePath = resolve(args[++i]);
+    } else if (arg === '--session') {
+      options.session = args[++i];
     } else if (arg === '--help' || arg === '-h') {
       printHelp();
       process.exit(0);
@@ -115,6 +132,9 @@ Options:
   -t, --template <id>       Use a built-in prompt template
   --template-vars <vars>    Variables for template (key=value,key2=value2)
   --list-templates          List all available templates
+  --chunk-strategy <type>   Chunking strategy: fixed, semantic, sentence, paragraph
+  -i, --image <path>        Path to image file for multimodal queries
+  --session <id>            Session ID to resume, or "new" to create one
   -h, --help                Show this help message
 
 Examples:
@@ -147,6 +167,18 @@ Examples:
 
   # List available templates
   npx tsx src/cli.ts --list-templates
+
+  # Use semantic chunking for large context
+  npx tsx src/cli.ts "Summarize" -f large.txt --chunk-strategy semantic
+
+  # Analyze an image with multimodal query
+  npx tsx src/cli.ts "Describe this image" --image photo.png -m claude-sonnet-4-5
+
+  # Create a new session
+  npx tsx src/cli.ts "Start analysis" -f data.txt --session new
+
+  # Resume an existing session
+  npx tsx src/cli.ts --session abc123
 
 Supported Models:
   OpenAI:     gpt-5, gpt-5-mini, gpt-4.1, gpt-4o, gpt-4o-mini, o3, o3-mini, o1
@@ -209,6 +241,22 @@ async function main(): Promise<void> {
     console.log(`Loaded context from ${filePath} (${context.length.toLocaleString()} chars)`);
   } else if (options.context) {
     context = options.context;
+  }
+
+  // Load image if specified
+  let image: ImageContent | undefined;
+  if (options.imagePath) {
+    if (!existsSync(options.imagePath)) {
+      console.error(`Error: Image file not found: ${options.imagePath}`);
+      process.exit(1);
+    }
+    try {
+      image = await createImageContent(options.imagePath);
+      console.log(`Loaded image from ${options.imagePath}`);
+    } catch (error) {
+      console.error(`Error loading image: ${error instanceof Error ? error.message : error}`);
+      process.exit(1);
+    }
   }
 
   // Apply template if specified
@@ -309,6 +357,46 @@ async function main(): Promise<void> {
     process.exit(1);
   }
 
+  // Handle session management
+  const sessionManager = new SessionManager();
+  let sessionId: string | undefined;
+
+  if (options.session) {
+    if (options.session === 'new') {
+      // Create a new session ID
+      sessionId = randomUUID();
+      console.log(`Created new session: ${sessionId}`);
+    } else {
+      // Try to resume existing session
+      sessionId = options.session;
+      const sessionExists = await sessionManager.exists(sessionId);
+      if (sessionExists) {
+        try {
+          const session = await sessionManager.load(sessionId);
+          // Restore query and context from session if not provided
+          if (!options.query && !options.template) {
+            query = session.query;
+            console.log(`Resumed session: ${sessionId}`);
+            console.log(`Original query: ${query}`);
+          }
+          if (!context && session.context) {
+            context = session.context;
+            console.log(`Restored context: ${context.length.toLocaleString()} characters`);
+          }
+          // Use the same model as the original session if not specified
+          if (!options.model) {
+            options.model = session.config.model;
+          }
+        } catch (error) {
+          console.error(`Error loading session: ${error instanceof Error ? error.message : error}`);
+          process.exit(1);
+        }
+      } else {
+        console.log(`Session not found: ${sessionId}, creating new session`);
+      }
+    }
+  }
+
   // Create RLM instance (requires API key)
   try {
     const config = resolveConfig({
@@ -328,10 +416,14 @@ async function main(): Promise<void> {
       verbose: config.verbose,
       maxIterations: config.maxIterations,
       temperature: config.temperature,
+      image,
     });
 
     console.log(`\nQuery: ${query}`);
     console.log(`Context: ${context.length.toLocaleString()} characters`);
+    if (image) {
+      console.log(`Image: ${options.imagePath} (${image.source.mediaType})`);
+    }
     console.log(`Model: ${model}`);
     console.log('\n--- Processing ---\n');
 
@@ -403,8 +495,27 @@ async function main(): Promise<void> {
           console.log(`  [${entry.data.type}] depth=${entry.depth}`);
         }
       }
+
+      // Save session on completion
+      if (sessionId) {
+        const session = createSession(query, context, config, { id: sessionId });
+        const completedSession = completeSession(session, result.response, result.executionTime);
+        await sessionManager.save(completedSession);
+        console.log(`\nSession saved: ${sessionId}`);
+      }
     }
   } catch (error) {
+    // Save failed session if session tracking is enabled
+    if (sessionId) {
+      try {
+        const session = createSession(query, context, { model, maxIterations: options.maxIterations }, { id: sessionId });
+        const failedSession = failSession(session, error instanceof Error ? error : new Error(String(error)));
+        await sessionManager.save(failedSession);
+        console.error(`Session saved (failed): ${sessionId}`);
+      } catch {
+        // Ignore session save errors
+      }
+    }
     console.error('\nError:', error instanceof Error ? error.message : error);
     process.exit(1);
   }
