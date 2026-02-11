@@ -16,6 +16,7 @@ import {
   wrapError,
 } from './utils/index.js';
 import { RLMLogger } from './logger/index.js';
+import { CostTracker, BudgetExceededError, TokenLimitExceededError } from './cost-tracker.js';
 
 /**
  * Default RLM options.
@@ -27,6 +28,8 @@ const DEFAULT_OPTIONS: Required<Omit<RLMOptions, 'apiKey' | 'provider' | 'extend
   sandboxTimeout: 10000,
   verbose: false,
   temperature: 0,
+  maxCost: undefined,
+  maxTokens: undefined,
 };
 
 /**
@@ -36,6 +39,7 @@ export class RLMExecutor {
   private options: Required<Omit<RLMOptions, 'apiKey' | 'provider' | 'extendedThinking' | 'image'>> & Pick<RLMOptions, 'apiKey' | 'provider' | 'extendedThinking' | 'image'>;
   private client: LLMClient;
   private logger: RLMLogger;
+  private costTracker: CostTracker;
 
   constructor(options: RLMOptions) {
     this.options = {
@@ -49,6 +53,11 @@ export class RLMExecutor {
     });
 
     this.logger = new RLMLogger(this.options.verbose);
+    this.costTracker = new CostTracker({
+      model: this.options.model,
+      maxCost: this.options.maxCost,
+      maxTokens: this.options.maxTokens,
+    });
   }
 
   /**
@@ -61,6 +70,7 @@ export class RLMExecutor {
   ): Promise<RLMResult> {
     const startTime = Date.now();
     this.logger.clear();
+    this.costTracker.reset();
 
     // Create sandbox with context and LLM query callback
     const sandbox = await this.createSandboxWithCallbacks(context, 0);
@@ -88,6 +98,8 @@ export class RLMExecutor {
           temperature: this.options.temperature,
           thinking: this.options.extendedThinking,
         });
+
+        this.costTracker.recordUsage(completion.usage, 0);
 
         // Log extended thinking if present
         if (completion.thinking) {
@@ -242,6 +254,8 @@ export class RLMExecutor {
         temperature: this.options.temperature,
       });
 
+      this.costTracker.recordUsage(completion.usage, depth);
+
       this.logger.logSubLLMCall(
         depth,
         prompt,
@@ -252,6 +266,9 @@ export class RLMExecutor {
 
       return completion.content;
     } catch (error) {
+      if (error instanceof BudgetExceededError || error instanceof TokenLimitExceededError) {
+        throw error;
+      }
       const wrapped = wrapError(error);
       this.logger.logError(depth, wrapped.message, wrapped.stack);
       return `[Error: ${wrapped.message}]`;

@@ -236,6 +236,10 @@ export interface RLMOptions {
   verbose?: boolean;             // Log execution details (default: false)
   temperature?: number;          // LLM temperature (default: 0)
   apiKey?: string;               // Override env var API key
+  /** Maximum total cost in USD before stopping */
+  maxCost?: number;
+  /** Maximum total tokens before stopping */
+  maxTokens?: number;
   /** Extended thinking configuration (Claude 4.5+ only) */
   extendedThinking?: ExtendedThinkingConfig;
   /** Image content for multimodal queries */

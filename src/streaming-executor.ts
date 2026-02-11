@@ -16,6 +16,7 @@ import {
   isRLMError,
 } from './utils/index.js';
 import { RLMLogger } from './logger/index.js';
+import { CostTracker, BudgetExceededError, TokenLimitExceededError } from './cost-tracker.js';
 
 /**
  * Default RLM options.
@@ -27,6 +28,8 @@ const DEFAULT_OPTIONS: Required<Omit<RLMOptions, 'apiKey' | 'provider' | 'extend
   sandboxTimeout: 30000,
   verbose: false,
   temperature: 0,
+  maxCost: undefined,
+  maxTokens: undefined,
 };
 
 /**
@@ -36,6 +39,7 @@ export class RLMStreamingExecutor {
   private options: Required<Omit<RLMOptions, 'apiKey' | 'provider' | 'extendedThinking' | 'image'>> & Pick<RLMOptions, 'apiKey' | 'provider' | 'extendedThinking' | 'image'>;
   private client: LLMClient;
   private logger: RLMLogger;
+  private costTracker: CostTracker;
 
   constructor(options: RLMOptions) {
     this.options = {
@@ -49,6 +53,11 @@ export class RLMStreamingExecutor {
     });
 
     this.logger = new RLMLogger(this.options.verbose);
+    this.costTracker = new CostTracker({
+      model: this.options.model,
+      maxCost: this.options.maxCost,
+      maxTokens: this.options.maxTokens,
+    });
   }
 
   /**
@@ -60,6 +69,7 @@ export class RLMStreamingExecutor {
   ): AsyncGenerator<RLMStreamEvent, RLMResult, unknown> {
     const startTime = Date.now();
     this.logger.clear();
+    this.costTracker.reset();
 
     // Emit start event
     yield this.createEvent('start', {
@@ -90,6 +100,8 @@ export class RLMStreamingExecutor {
           temperature: this.options.temperature,
           thinking: this.options.extendedThinking,
         });
+
+        this.costTracker.recordUsage(completion.usage, 0);
 
         // Emit extended thinking event if present (Claude 4.5+)
         if (completion.thinking) {
@@ -297,6 +309,8 @@ export class RLMStreamingExecutor {
         temperature: this.options.temperature,
       });
 
+      this.costTracker.recordUsage(completion.usage, depth);
+
       this.logger.logSubLLMCall(
         depth,
         prompt,
@@ -307,6 +321,9 @@ export class RLMStreamingExecutor {
 
       return completion.content;
     } catch (error) {
+      if (error instanceof BudgetExceededError || error instanceof TokenLimitExceededError) {
+        throw error;
+      }
       const wrapped = wrapError(error);
       this.logger.logError(depth, wrapped.message, wrapped.stack);
       return `[Error: ${wrapped.message}]`;
