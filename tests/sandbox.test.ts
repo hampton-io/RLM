@@ -69,6 +69,16 @@ describe('VMSandbox', () => {
     expect(result.output).toBe('47'); // Length of test context
   });
 
+  it('should block code generation escapes', async () => {
+    const result = await sandbox.execute(`
+      const getProcess = this.constructor.constructor('return process');
+      print(getProcess());
+    `);
+
+    expect(result.error).toBeDefined();
+    expect(result.error).toMatch(/code generation|constructor|undefined/i);
+  });
+
   it('should handle errors gracefully', async () => {
     const result = await sandbox.execute(`
       throw new Error("Test error");

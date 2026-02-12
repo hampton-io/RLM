@@ -97,7 +97,8 @@ export class VMSandbox implements SandboxEnvironment {
       };
     };
 
-    const sandbox: Record<string, unknown> = {
+    const sandbox: Record<string, unknown> = Object.create(null);
+    Object.assign(sandbox, {
       // The main context variable
       context: contextString,
 
@@ -160,24 +161,6 @@ export class VMSandbox implements SandboxEnvironment {
       },
 
       // Safe subset of built-ins
-      Array,
-      Object,
-      String,
-      Number,
-      Boolean,
-      Date,
-      Math,
-      JSON,
-      RegExp,
-      Map,
-      Set,
-      Promise,
-      parseInt,
-      parseFloat,
-      isNaN,
-      isFinite,
-      encodeURIComponent,
-      decodeURIComponent,
       setTimeout: (fn: () => void, ms: number) => {
         // Limited setTimeout - max 5 seconds
         const safeMs = Math.min(ms, 5000);
@@ -198,14 +181,19 @@ export class VMSandbox implements SandboxEnvironment {
       __setVar__: (name: string, value: unknown) => {
         this.variables[name] = value;
       },
-    };
+    });
 
     // Inject all registered tools
     for (const tool of this.toolRegistry.list()) {
       sandbox[tool.name] = wrapToolFunction(tool);
     }
 
-    return vm.createContext(sandbox);
+    return vm.createContext(sandbox, {
+      codeGeneration: {
+        strings: false,
+        wasm: false,
+      },
+    });
   }
 
   /**
