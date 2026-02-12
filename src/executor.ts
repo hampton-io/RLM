@@ -21,7 +21,7 @@ import { CostTracker, BudgetExceededError, TokenLimitExceededError } from './cos
 /**
  * Default RLM options.
  */
-const DEFAULT_OPTIONS: Required<Omit<RLMOptions, 'apiKey' | 'provider' | 'extendedThinking' | 'image'>> = {
+const DEFAULT_OPTIONS: Required<Omit<RLMOptions, 'apiKey' | 'provider' | 'extendedThinking' | 'image' | 'maxCost' | 'maxTokens'>> & Pick<RLMOptions, 'maxCost' | 'maxTokens'> = {
   model: 'gpt-4o-mini',
   maxIterations: 20,
   maxDepth: 1,
@@ -36,7 +36,7 @@ const DEFAULT_OPTIONS: Required<Omit<RLMOptions, 'apiKey' | 'provider' | 'extend
  * RLM Executor - orchestrates the REPL-style execution loop.
  */
 export class RLMExecutor {
-  private options: Required<Omit<RLMOptions, 'apiKey' | 'provider' | 'extendedThinking' | 'image'>> & Pick<RLMOptions, 'apiKey' | 'provider' | 'extendedThinking' | 'image'>;
+  private options: Required<Omit<RLMOptions, 'apiKey' | 'provider' | 'extendedThinking' | 'image' | 'maxCost' | 'maxTokens'>> & Pick<RLMOptions, 'apiKey' | 'provider' | 'extendedThinking' | 'image' | 'maxCost' | 'maxTokens'>;
   private client: LLMClient;
   private logger: RLMLogger;
   private costTracker: CostTracker;
