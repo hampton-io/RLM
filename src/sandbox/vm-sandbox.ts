@@ -37,6 +37,7 @@ export class VMSandbox implements SandboxEnvironment {
   private queryCounter = 0;
   private isExecuting = false;
   private toolRegistry: ToolRegistry;
+  private activeTimeouts: Set<NodeJS.Timeout> = new Set();
 
   constructor(config: SandboxConfig) {
     this.options = { ...DEFAULT_OPTIONS, ...config.options };
@@ -134,7 +135,9 @@ export class VMSandbox implements SandboxEnvironment {
       },
 
       grep: (text: string, pattern: string | RegExp): string[] => {
-        const regex = typeof pattern === 'string' ? new RegExp(pattern, 'gm') : pattern;
+        const regex = typeof pattern === 'string'
+          ? new RegExp(pattern, 'm')
+          : new RegExp(pattern.source, pattern.flags.replace('g', ''));
         const lines = text.split('\n');
         return lines.filter((line) => regex.test(line));
       },
@@ -178,9 +181,17 @@ export class VMSandbox implements SandboxEnvironment {
       setTimeout: (fn: () => void, ms: number) => {
         // Limited setTimeout - max 5 seconds
         const safeMs = Math.min(ms, 5000);
-        return setTimeout(fn, safeMs);
+        const timeout = setTimeout(() => {
+          this.activeTimeouts.delete(timeout);
+          fn();
+        }, safeMs);
+        this.activeTimeouts.add(timeout);
+        return timeout;
       },
-      clearTimeout,
+      clearTimeout: (timeout: NodeJS.Timeout) => {
+        this.activeTimeouts.delete(timeout);
+        clearTimeout(timeout);
+      },
 
       // Variable storage for FINAL_VAR
       __variables__: this.variables,
@@ -225,8 +236,24 @@ export class VMSandbox implements SandboxEnvironment {
         timeout: this.options.timeout,
       });
 
-      // Process pending queries as they come in
-      await this.executeWithQueryProcessing(executionPromise);
+      let timeoutHandle: NodeJS.Timeout | undefined;
+      const timeoutPromise = new Promise((_, reject) => {
+        timeoutHandle = setTimeout(() => {
+          this.isExecuting = false;
+          this.clearTrackedTimeouts();
+          reject(new Error(`Sandbox execution timed out after ${this.options.timeout}ms`));
+        }, this.options.timeout);
+      });
+
+      try {
+        // Process pending queries as they come in
+        await this.executeWithQueryProcessing(Promise.race([executionPromise, timeoutPromise]));
+      } finally {
+        if (timeoutHandle) {
+          clearTimeout(timeoutHandle);
+        }
+        this.clearTrackedTimeouts();
+      }
 
       // Update variables from context
       this.updateVariables();
@@ -307,6 +334,16 @@ export class VMSandbox implements SandboxEnvironment {
   }
 
   /**
+   * Clear any tracked timeouts.
+   */
+  private clearTrackedTimeouts(): void {
+    for (const timeout of this.activeTimeouts) {
+      clearTimeout(timeout);
+    }
+    this.activeTimeouts.clear();
+  }
+
+  /**
    * Update stored variables from context.
    */
   private updateVariables(): void {
@@ -356,6 +393,7 @@ export class VMSandbox implements SandboxEnvironment {
     this.variables = {};
     this.pendingQueries = [];
     this.queryCounter = 0;
+    this.clearTrackedTimeouts();
   }
 
   /**

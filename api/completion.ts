@@ -1,6 +1,56 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { RLM, CompletionRequestSchema, isRLMError } from '../src/index.js';
 
+const API_KEY_ENV = 'RLM_API_KEY';
+const MAX_BODY_BYTES = 1_000_000; // 1MB
+const RATE_LIMIT_WINDOW_MS = 60_000;
+const RATE_LIMIT_MAX_REQUESTS = 60;
+
+const rateLimitBuckets = new Map<string, { count: number; windowStart: number }>();
+
+function getClientId(req: VercelRequest): string {
+  const forwardedFor = req.headers['x-forwarded-for'];
+  if (Array.isArray(forwardedFor)) {
+    return forwardedFor[0] ?? 'unknown';
+  }
+  if (typeof forwardedFor === 'string' && forwardedFor.length > 0) {
+    return forwardedFor.split(',')[0].trim();
+  }
+  return req.socket.remoteAddress ?? 'unknown';
+}
+
+function getApiKey(req: VercelRequest): string | null {
+  const authHeader = req.headers.authorization;
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    return authHeader.slice('Bearer '.length).trim();
+  }
+  const apiKeyHeader = req.headers['x-api-key'];
+  if (Array.isArray(apiKeyHeader)) {
+    return apiKeyHeader[0] ?? null;
+  }
+  if (typeof apiKeyHeader === 'string') {
+    return apiKeyHeader;
+  }
+  return null;
+}
+
+function isRateLimited(clientId: string): { limited: boolean; retryAfterMs: number } {
+  const now = Date.now();
+  const bucket = rateLimitBuckets.get(clientId);
+  if (!bucket || now - bucket.windowStart >= RATE_LIMIT_WINDOW_MS) {
+    rateLimitBuckets.set(clientId, { count: 1, windowStart: now });
+    return { limited: false, retryAfterMs: RATE_LIMIT_WINDOW_MS };
+  }
+
+  if (bucket.count >= RATE_LIMIT_MAX_REQUESTS) {
+    const retryAfterMs = RATE_LIMIT_WINDOW_MS - (now - bucket.windowStart);
+    return { limited: true, retryAfterMs };
+  }
+
+  bucket.count += 1;
+  return { limited: false, retryAfterMs: RATE_LIMIT_WINDOW_MS };
+}
+
 /**
  * POST /api/completion
  *
@@ -35,6 +85,48 @@ export default async function handler(
     return res.status(405).json({
       success: false,
       error: 'Method not allowed. Use POST.',
+    });
+  }
+
+  const requiredApiKey = process.env[API_KEY_ENV];
+  if (!requiredApiKey) {
+    return res.status(500).json({
+      success: false,
+      error: 'API key not configured on server.',
+    });
+  }
+
+  const providedApiKey = getApiKey(req);
+  if (!providedApiKey || providedApiKey !== requiredApiKey) {
+    return res.status(401).json({
+      success: false,
+      error: 'Unauthorized. Invalid API key.',
+    });
+  }
+
+  const contentLength = Number(req.headers['content-length'] ?? 0);
+  if (contentLength && contentLength > MAX_BODY_BYTES) {
+    return res.status(413).json({
+      success: false,
+      error: 'Request payload too large.',
+    });
+  }
+
+  const estimatedBodySize = Buffer.byteLength(JSON.stringify(req.body ?? {}), 'utf8');
+  if (estimatedBodySize > MAX_BODY_BYTES) {
+    return res.status(413).json({
+      success: false,
+      error: 'Request payload too large.',
+    });
+  }
+
+  const clientId = getClientId(req);
+  const rateLimit = isRateLimited(clientId);
+  if (rateLimit.limited) {
+    res.setHeader('Retry-After', Math.ceil(rateLimit.retryAfterMs / 1000));
+    return res.status(429).json({
+      success: false,
+      error: 'Rate limit exceeded. Try again later.',
     });
   }
 
