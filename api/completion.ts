@@ -148,6 +148,8 @@ export default async function handler(
       model: (options?.model as Parameters<typeof RLM['prototype']['constructor']>[0]['model']) ?? 'gpt-4o-mini',
       maxIterations: options?.maxIterations ?? 20,
       maxDepth: options?.maxDepth ?? 1,
+      maxCost: options?.maxCost,
+      maxTokens: options?.maxTokens,
       temperature: options?.temperature ?? 0,
       verbose: false,
     });
