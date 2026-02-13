@@ -1,5 +1,22 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
+const API_KEY_ENV = 'RLM_API_KEY';
+
+function getApiKey(req: VercelRequest): string | null {
+  const authHeader = req.headers.authorization;
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    return authHeader.slice('Bearer '.length).trim();
+  }
+  const apiKeyHeader = req.headers['x-api-key'];
+  if (Array.isArray(apiKeyHeader)) {
+    return apiKeyHeader[0] ?? null;
+  }
+  if (typeof apiKeyHeader === 'string') {
+    return apiKeyHeader;
+  }
+  return null;
+}
+
 /**
  * GET /api/health
  *
@@ -13,6 +30,22 @@ export default function handler(
     return res.status(405).json({
       success: false,
       error: 'Method not allowed. Use GET.',
+    });
+  }
+
+  const requiredApiKey = process.env[API_KEY_ENV];
+  if (!requiredApiKey) {
+    return res.status(500).json({
+      success: false,
+      error: 'API key not configured on server.',
+    });
+  }
+
+  const providedApiKey = getApiKey(req);
+  if (!providedApiKey || providedApiKey !== requiredApiKey) {
+    return res.status(401).json({
+      success: false,
+      error: 'Unauthorized. Invalid API key.',
     });
   }
 
