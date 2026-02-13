@@ -13,6 +13,7 @@ import {
   listTemplateIds,
 } from './templates/index.js';
 import { SessionManager, createSession, completeSession, failSession } from './session.js';
+import { metricsCollector } from './metrics/index.js';
 import type { SupportedModel, ImageContent } from './types.js';
 import type { ChunkStrategy } from './embeddings/types.js';
 
@@ -44,6 +45,8 @@ interface CLIOptions {
   chunkStrategy?: ChunkStrategy;
   imagePath?: string;
   session?: string;
+  metrics?: boolean;
+  metricsPort?: number;
 }
 
 function parseArgs(args: string[]): CLIOptions {
@@ -94,6 +97,10 @@ function parseArgs(args: string[]): CLIOptions {
       options.imagePath = resolve(args[++i]);
     } else if (arg === '--session') {
       options.session = args[++i];
+    } else if (arg === '--metrics') {
+      options.metrics = true;
+    } else if (arg === '--metrics-port') {
+      options.metricsPort = parseInt(args[++i], 10);
     } else if (arg === '--help' || arg === '-h') {
       printHelp();
       process.exit(0);
@@ -135,6 +142,8 @@ Options:
   --chunk-strategy <type>   Chunking strategy: fixed, semantic, sentence, paragraph
   -i, --image <path>        Path to image file for multimodal queries
   --session <id>            Session ID to resume, or "new" to create one
+  --metrics                 Enable metrics collection
+  --metrics-port <port>     Port for metrics API server (default: 3001)
   -h, --help                Show this help message
 
 Examples:
@@ -395,6 +404,17 @@ async function main(): Promise<void> {
         console.log(`Session not found: ${sessionId}, creating new session`);
       }
     }
+  }
+
+  // Configure metrics if enabled
+  if (options.metrics) {
+    metricsCollector.configure({
+      enabled: true,
+      apiKey: process.env.RLM_METRICS_API_KEY,
+      redactQueries: process.env.RLM_REDACT_QUERIES === 'true',
+      maxHistory: parseInt(process.env.RLM_MAX_HISTORY || '10000', 10),
+    });
+    console.log('Metrics collection enabled');
   }
 
   // Create RLM instance (requires API key)
