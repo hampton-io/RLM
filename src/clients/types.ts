@@ -73,14 +73,26 @@ export interface ModelPricing {
  */
 export const MODEL_PRICING: Record<string, ModelPricing> = {
   // ==========================================================================
-  // OpenAI Models
+  // OpenAI Models (February 2026)
   // ==========================================================================
 
-  // GPT-5 Series (flagship reasoning models)
+  // GPT-5.2 Series (latest flagship)
+  'gpt-5.2': { inputPer1M: 5, outputPer1M: 15 },
+  'gpt-5.2-pro': { inputPer1M: 10, outputPer1M: 40 },
+  'gpt-5.2-codex': { inputPer1M: 2, outputPer1M: 8 },
+  
+  // GPT-5.1 Series
+  'gpt-5.1': { inputPer1M: 5, outputPer1M: 15 },
+  'gpt-5.1-codex': { inputPer1M: 2, outputPer1M: 8 },
+  'gpt-5.1-codex-max': { inputPer1M: 3, outputPer1M: 12 },
+  'gpt-5.1-codex-mini': { inputPer1M: 0.5, outputPer1M: 2 },
+
+  // GPT-5 Series
   'gpt-5': { inputPer1M: 5, outputPer1M: 15 },
   'gpt-5-mini': { inputPer1M: 1, outputPer1M: 4 },
-  'gpt-5.1': { inputPer1M: 5, outputPer1M: 15 },
-  'gpt-5.2': { inputPer1M: 5, outputPer1M: 15 },
+  'gpt-5-nano': { inputPer1M: 0.25, outputPer1M: 1 },
+  'gpt-5-pro': { inputPer1M: 10, outputPer1M: 40 },
+  'gpt-5-codex': { inputPer1M: 2, outputPer1M: 8 },
 
   // GPT-4.1 Series
   'gpt-4.1': { inputPer1M: 2, outputPer1M: 8 },
@@ -91,12 +103,17 @@ export const MODEL_PRICING: Record<string, ModelPricing> = {
   'gpt-4o': { inputPer1M: 2.5, outputPer1M: 10 },
   'gpt-4o-mini': { inputPer1M: 0.15, outputPer1M: 0.6 },
 
+  // o4 Reasoning Models (latest)
+  'o4-mini': { inputPer1M: 1.1, outputPer1M: 4.4 },
+  'o4-mini-deep-research': { inputPer1M: 2.5, outputPer1M: 10 },
+
   // o3 Reasoning Models
   'o3': { inputPer1M: 2, outputPer1M: 8 },
   'o3-mini': { inputPer1M: 0.55, outputPer1M: 2.2 },
   'o3-pro': { inputPer1M: 20, outputPer1M: 80 },
+  'o3-deep-research': { inputPer1M: 5, outputPer1M: 20 },
 
-  // o1 Reasoning Models
+  // o1 Reasoning Models (deprecated)
   'o1': { inputPer1M: 15, outputPer1M: 60 },
   'o1-mini': { inputPer1M: 3, outputPer1M: 12 },
   'o1-pro': { inputPer1M: 150, outputPer1M: 600 },
@@ -106,8 +123,11 @@ export const MODEL_PRICING: Record<string, ModelPricing> = {
   'gpt-3.5-turbo': { inputPer1M: 0.5, outputPer1M: 1.5 },
 
   // ==========================================================================
-  // Anthropic Models
+  // Anthropic Models (February 2026)
   // ==========================================================================
+
+  // Claude 4.6 Series (latest)
+  'claude-opus-4-6': { inputPer1M: 15, outputPer1M: 75 },
 
   // Claude 4.5 Series (current flagship)
   'claude-sonnet-4-5': { inputPer1M: 3, outputPer1M: 15 },
@@ -129,12 +149,14 @@ export const MODEL_PRICING: Record<string, ModelPricing> = {
   'claude-3-haiku-20240307': { inputPer1M: 0.25, outputPer1M: 1.25 },
 
   // ==========================================================================
-  // Google Gemini Models
+  // Google Gemini Models (February 2026)
   // ==========================================================================
 
-  // Gemini 3 Series (preview)
+  // Gemini 3 Series (latest)
   'gemini-3-pro-preview': { inputPer1M: 3.5, outputPer1M: 14 },
   'gemini-3-flash-preview': { inputPer1M: 0.5, outputPer1M: 2 },
+  'gemini-3-pro': { inputPer1M: 3.5, outputPer1M: 14 },
+  'gemini-3-flash': { inputPer1M: 0.5, outputPer1M: 2 },
 
   // Gemini 2.5 Series (production)
   'gemini-2.5-pro': { inputPer1M: 1.25, outputPer1M: 10 },
