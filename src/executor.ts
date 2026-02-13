@@ -118,25 +118,7 @@ export class RLMExecutor {
         // Parse the response
         const parsed = parseLLMOutput(completion.content);
 
-        // Check for final answer
-        if (parsed.final) {
-          if (parsed.final.type === 'FINAL') {
-            finalAnswer = parsed.final.value;
-          } else if (parsed.final.type === 'FINAL_VAR') {
-            const varValue = sandbox.getVariable(parsed.final.value);
-            finalAnswer = this.stringify(varValue);
-          }
-
-          this.logger.logFinalOutput(
-            0,
-            finalAnswer ?? '',
-            parsed.final.type,
-            parsed.final.type === 'FINAL_VAR' ? parsed.final.value : undefined
-          );
-          break;
-        }
-
-        // If there's code to execute
+        // Execute code FIRST if present (needed for FINAL_VAR to work)
         if (parsed.code) {
           const result = await sandbox.execute(parsed.code);
 
@@ -161,7 +143,28 @@ export class RLMExecutor {
             role: 'user',
             content: executionFeedback,
           });
-        } else {
+        }
+
+        // Check for final answer AFTER code execution (so FINAL_VAR can resolve)
+        if (parsed.final) {
+          if (parsed.final.type === 'FINAL') {
+            finalAnswer = parsed.final.value;
+          } else if (parsed.final.type === 'FINAL_VAR') {
+            const varValue = sandbox.getVariable(parsed.final.value);
+            finalAnswer = this.stringify(varValue);
+          }
+
+          this.logger.logFinalOutput(
+            0,
+            finalAnswer ?? '',
+            parsed.final.type,
+            parsed.final.type === 'FINAL_VAR' ? parsed.final.value : undefined
+          );
+          break;
+        }
+
+        // No code and no final answer - the model might be thinking
+        if (!parsed.code) {
           // No code and no final answer - the model might be thinking
           // Add the response and prompt for action
           messages.push({
