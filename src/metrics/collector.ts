@@ -1,7 +1,11 @@
 /**
  * RLM Metrics Collector
  * Collects and stores query metrics for observability
+ * Supports file-based persistence for sharing between processes
  */
+
+import { existsSync, readFileSync, writeFileSync, mkdirSync } from "node:fs";
+import { dirname } from "node:path";
 
 export interface QueryMetric {
   id: string;
@@ -26,15 +30,27 @@ export interface MetricsConfig {
   redactQueries?: boolean;
   maxHistory?: number; // Max queries to keep in memory
   apiKey?: string;
+  storagePath?: string; // Path to JSON file for persistence
+}
+
+interface StoredMetric extends Omit<QueryMetric, "timestamp"> {
+  timestamp: string; // ISO string for JSON serialization
 }
 
 class MetricsCollector {
   private queries: QueryMetric[] = [];
   private config: MetricsConfig = { enabled: false };
   private startTime: Date = new Date();
+  private loaded = false;
 
   configure(config: MetricsConfig): void {
     this.config = config;
+    
+    // Load existing metrics from file if configured
+    if (config.storagePath && !this.loaded) {
+      this.loadFromFile();
+      this.loaded = true;
+    }
   }
 
   isEnabled(): boolean {
@@ -48,6 +64,11 @@ class MetricsCollector {
   record(metric: Omit<QueryMetric, "id" | "timestamp">): QueryMetric {
     if (!this.config.enabled) {
       return { ...metric, id: "", timestamp: new Date() };
+    }
+
+    // Reload from file to get latest (in case another process wrote)
+    if (this.config.storagePath) {
+      this.loadFromFile();
     }
 
     const fullMetric: QueryMetric = {
@@ -70,6 +91,11 @@ class MetricsCollector {
       this.queries = this.queries.slice(0, maxHistory);
     }
 
+    // Save to file if configured
+    if (this.config.storagePath) {
+      this.saveToFile();
+    }
+
     return fullMetric;
   }
 
@@ -80,6 +106,11 @@ class MetricsCollector {
     model?: string;
     success?: boolean;
   }): { queries: QueryMetric[]; total: number } {
+    // Reload from file to get latest
+    if (this.config.storagePath) {
+      this.loadFromFile();
+    }
+
     let filtered = [...this.queries];
 
     if (options?.since) {
@@ -103,6 +134,9 @@ class MetricsCollector {
   }
 
   getQuery(id: string): QueryMetric | undefined {
+    if (this.config.storagePath) {
+      this.loadFromFile();
+    }
     return this.queries.find((q) => q.id === id);
   }
 
@@ -113,6 +147,10 @@ class MetricsCollector {
     errorRate: number;
     byModel: Record<string, { queries: number; cost: number }>;
   } {
+    if (this.config.storagePath) {
+      this.loadFromFile();
+    }
+
     const now = new Date();
     const periodMs = {
       hour: 60 * 60 * 1000,
@@ -153,6 +191,10 @@ class MetricsCollector {
     lastQuery?: Date;
     totalQueries: number;
   } {
+    if (this.config.storagePath) {
+      this.loadFromFile();
+    }
+
     const stats = this.getStats("hour");
     const uptime = Date.now() - this.startTime.getTime();
 
@@ -163,7 +205,7 @@ class MetricsCollector {
     return {
       status,
       uptime,
-      activeQueries: 0, // Could track active queries if needed
+      activeQueries: 0,
       lastQuery: this.queries[0]?.timestamp,
       totalQueries: this.queries.length,
     };
@@ -171,6 +213,46 @@ class MetricsCollector {
 
   clear(): void {
     this.queries = [];
+    if (this.config.storagePath) {
+      this.saveToFile();
+    }
+  }
+
+  private loadFromFile(): void {
+    if (!this.config.storagePath) return;
+
+    try {
+      if (existsSync(this.config.storagePath)) {
+        const data = readFileSync(this.config.storagePath, "utf8");
+        const stored: StoredMetric[] = JSON.parse(data);
+        this.queries = stored.map((m) => ({
+          ...m,
+          timestamp: new Date(m.timestamp),
+        }));
+      }
+    } catch (error) {
+      console.error("Failed to load metrics from file:", error);
+    }
+  }
+
+  private saveToFile(): void {
+    if (!this.config.storagePath) return;
+
+    try {
+      // Ensure directory exists
+      const dir = dirname(this.config.storagePath);
+      if (!existsSync(dir)) {
+        mkdirSync(dir, { recursive: true });
+      }
+
+      const stored: StoredMetric[] = this.queries.map((m) => ({
+        ...m,
+        timestamp: m.timestamp.toISOString(),
+      }));
+      writeFileSync(this.config.storagePath, JSON.stringify(stored, null, 2));
+    } catch (error) {
+      console.error("Failed to save metrics to file:", error);
+    }
   }
 
   private generateId(): string {
@@ -178,7 +260,6 @@ class MetricsCollector {
   }
 
   private hashQuery(query: string): string {
-    // Simple hash for demo - use crypto.subtle.digest in production
     let hash = 0;
     for (let i = 0; i < query.length; i++) {
       const char = query.charCodeAt(i);
