@@ -145,7 +145,27 @@ export class RLMExecutor {
           });
         }
 
-        // Check for final answer AFTER code execution (so FINAL_VAR can resolve)
+        // Check for final answer from sandbox FIRST (handles evaluated template literals)
+        // This catches cases like: FINAL(`Answer: ${myVar}`) where the function evaluates the template
+        const sandboxFinalAnswer = sandbox.getVariable('__FINAL_ANSWER__');
+        const sandboxFinalVarName = sandbox.getVariable('__FINAL_VAR_NAME__');
+        
+        if (sandboxFinalAnswer !== undefined) {
+          // FINAL() was called as a function with an evaluated value
+          finalAnswer = this.stringify(sandboxFinalAnswer);
+          this.logger.logFinalOutput(0, finalAnswer, 'FINAL', undefined);
+          break;
+        }
+        
+        if (sandboxFinalVarName !== undefined) {
+          // FINAL_VAR() was called as a function
+          const varValue = sandbox.getVariable(String(sandboxFinalVarName));
+          finalAnswer = this.stringify(varValue);
+          this.logger.logFinalOutput(0, finalAnswer ?? '', 'FINAL_VAR', String(sandboxFinalVarName));
+          break;
+        }
+
+        // Fallback: Check for final answer via text parsing (for non-code FINAL statements)
         if (parsed.final) {
           if (parsed.final.type === 'FINAL') {
             // Check if value looks like a bare variable name (no spaces, quotes, punctuation)
