@@ -1,6 +1,23 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { RLM, CompletionRequestSchema, isRLMError } from '../src/index.js';
 
+const API_KEY_ENV = 'RLM_API_KEY';
+
+function getApiKey(req: VercelRequest): string | null {
+  const authHeader = req.headers.authorization;
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    return authHeader.slice('Bearer '.length).trim();
+  }
+  const apiKeyHeader = req.headers['x-api-key'];
+  if (Array.isArray(apiKeyHeader)) {
+    return apiKeyHeader[0] ?? null;
+  }
+  if (typeof apiKeyHeader === 'string') {
+    return apiKeyHeader;
+  }
+  return null;
+}
+
 /**
  * POST /api/stream
  *
@@ -38,6 +55,22 @@ export default async function handler(
     });
   }
 
+  const requiredApiKey = process.env[API_KEY_ENV];
+  if (!requiredApiKey) {
+    return res.status(500).json({
+      success: false,
+      error: 'API key not configured on server.',
+    });
+  }
+
+  const providedApiKey = getApiKey(req);
+  if (!providedApiKey || providedApiKey !== requiredApiKey) {
+    return res.status(401).json({
+      success: false,
+      error: 'Unauthorized. Invalid API key.',
+    });
+  }
+
   // Set up SSE headers
   res.setHeader('Content-Type', 'text/event-stream');
   res.setHeader('Cache-Control', 'no-cache');
@@ -70,6 +103,8 @@ export default async function handler(
       model: (options?.model as Parameters<typeof RLM['prototype']['constructor']>[0]['model']) ?? 'gpt-4o-mini',
       maxIterations: options?.maxIterations ?? 20,
       maxDepth: options?.maxDepth ?? 1,
+      maxCost: options?.maxCost,
+      maxTokens: options?.maxTokens,
       temperature: options?.temperature ?? 0,
       verbose: false,
     });
