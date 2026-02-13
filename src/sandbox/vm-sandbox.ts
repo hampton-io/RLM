@@ -139,7 +139,10 @@ export class VMSandbox implements SandboxEnvironment {
           ? new RegExp(pattern, 'm')
           : new RegExp(pattern.source, pattern.flags.replace(/[gy]/g, ''));
         const lines = text.split('\n');
-        return lines.filter((line) => regex.test(line));
+        return lines.filter((line) => {
+          regex.lastIndex = 0;
+          return regex.test(line);
+        });
       },
 
       len: (text: string): number => {
