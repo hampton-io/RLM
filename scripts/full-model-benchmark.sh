@@ -61,35 +61,50 @@ echo "" >> "$REPORT_FILE"
 echo "| Provider | Model | Time | Tokens | Calls | Cost | Status | Notes |" >> "$REPORT_FILE"
 echo "|----------|-------|------|--------|-------|------|--------|-------|" >> "$REPORT_FILE"
 
-# All models to test
+# All models to test (February 2026)
 declare -a MODELS=(
-  # OpenAI - GPT-4o series
-  "gpt-4o-mini"
-  "gpt-4o"
-  # OpenAI - GPT-4.1 series  
-  "gpt-4.1-nano"
-  "gpt-4.1-mini"
-  "gpt-4.1"
+  # OpenAI - GPT-5.2 series (latest)
+  "gpt-5.2"
+  "gpt-5.2-pro"
+  "gpt-5.2-codex"
+  # OpenAI - GPT-5.1 series
+  "gpt-5.1"
+  "gpt-5.1-codex"
+  "gpt-5.1-codex-mini"
   # OpenAI - GPT-5 series
-  "gpt-5-mini"
   "gpt-5"
-  # OpenAI - Reasoning models
+  "gpt-5-mini"
+  "gpt-5-nano"
+  # OpenAI - GPT-4.1 series  
+  "gpt-4.1"
+  "gpt-4.1-mini"
+  "gpt-4.1-nano"
+  # OpenAI - GPT-4o series
+  "gpt-4o"
+  "gpt-4o-mini"
+  # OpenAI - o4 Reasoning (latest)
+  "o4-mini"
+  # OpenAI - o3 Reasoning
+  "o3"
   "o3-mini"
-  "o1-mini"
+  # Anthropic - Claude 4.6 (latest)
+  "claude-opus-4-6"
   # Anthropic - Claude 4.5
   "claude-haiku-4-5"
   "claude-sonnet-4-5"
   "claude-opus-4-5"
-  # Google - Gemini 2.0
-  "gemini-2.0-flash"
-  "gemini-2.0-flash-lite"
+  # Google - Gemini 3 (latest)
+  "gemini-3-flash"
+  "gemini-3-pro"
+  "gemini-3-flash-preview"
+  "gemini-3-pro-preview"
   # Google - Gemini 2.5
   "gemini-2.5-flash"
   "gemini-2.5-flash-lite"
   "gemini-2.5-pro"
-  # Google - Gemini 3
-  "gemini-3-flash-preview"
-  "gemini-3-pro-preview"
+  # Google - Gemini 2.0
+  "gemini-2.0-flash"
+  "gemini-2.0-flash-lite"
 )
 
 for MODEL in "${MODELS[@]}"; do
