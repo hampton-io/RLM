@@ -138,9 +138,12 @@ export class VMSandbox implements SandboxEnvironment {
       grep: (text: string, pattern: string | RegExp): string[] => {
         const regex = typeof pattern === 'string'
           ? new RegExp(pattern, 'm')
-          : new RegExp(pattern.source, pattern.flags.replace('g', ''));
+          : new RegExp(pattern.source, pattern.flags.replace(/[gy]/g, ''));
         const lines = text.split('\n');
-        return lines.filter((line) => regex.test(line));
+        return lines.filter((line) => {
+          regex.lastIndex = 0;
+          return regex.test(line);
+        });
       },
 
       len: (text: string): number => {

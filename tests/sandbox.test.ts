@@ -60,6 +60,28 @@ describe('VMSandbox', () => {
     expect(result.output).toContain('foo baz');
   });
 
+  it('should handle sticky regex flags safely', async () => {
+    const result = await sandbox.execute(`
+      const text = "foo\\nfoo\\nbar";
+      const matches = grep(text, /foo/y);
+      print(JSON.stringify(matches));
+    `);
+
+    expect(result.error).toBeUndefined();
+    expect(result.output).toContain('["foo","foo"]');
+  });
+
+  it('should handle global regex flags safely', async () => {
+    const result = await sandbox.execute(`
+      const text = "foo\\nfoo\\nbar";
+      const matches = grep(text, /foo/g);
+      print(JSON.stringify(matches));
+    `);
+
+    expect(result.error).toBeUndefined();
+    expect(result.output).toContain('["foo","foo"]');
+  });
+
   it('should use len utility', async () => {
     const result = await sandbox.execute(`
       print(len(context));
