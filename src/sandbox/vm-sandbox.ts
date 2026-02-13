@@ -193,6 +193,19 @@ export class VMSandbox implements SandboxEnvironment {
       get: (name: string) => {
         return this.variables[name];
       },
+
+      // FINAL functions - capture evaluated values (not raw text)
+      // This allows template literals like FINAL(`Answer: ${myVar}`) to work
+      FINAL: (value: unknown) => {
+        const stringValue = typeof value === 'string' ? value : this.stringify(value);
+        this.variables['__FINAL_ANSWER__'] = stringValue;
+        return stringValue;
+      },
+      FINAL_VAR: (varName: string) => {
+        // Mark that we want to resolve this variable name later
+        this.variables['__FINAL_VAR_NAME__'] = varName;
+        return varName;
+      },
     });
 
     // Inject all registered tools
