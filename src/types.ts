@@ -6,13 +6,23 @@ import { z } from 'zod';
 
 export type ModelProvider = 'openai' | 'anthropic' | 'google';
 
-// OpenAI Models (January 2026)
+// OpenAI Models (February 2026)
 export type OpenAIModel =
-  // GPT-5 Series (latest flagship reasoning models)
+  // GPT-5.2 Series (latest flagship)
+  | 'gpt-5.2'
+  | 'gpt-5.2-pro'
+  | 'gpt-5.2-codex'
+  // GPT-5.1 Series
+  | 'gpt-5.1'
+  | 'gpt-5.1-codex'
+  | 'gpt-5.1-codex-max'
+  | 'gpt-5.1-codex-mini'
+  // GPT-5 Series
   | 'gpt-5'
   | 'gpt-5-mini'
-  | 'gpt-5.1'
-  | 'gpt-5.2'
+  | 'gpt-5-nano'
+  | 'gpt-5-pro'
+  | 'gpt-5-codex'
   // GPT-4.1 Series
   | 'gpt-4.1'
   | 'gpt-4.1-mini'
@@ -20,11 +30,15 @@ export type OpenAIModel =
   // GPT-4o Series
   | 'gpt-4o'
   | 'gpt-4o-mini'
+  // o4 Reasoning Models (latest)
+  | 'o4-mini'
+  | 'o4-mini-deep-research'
   // o3 Reasoning Models
   | 'o3'
   | 'o3-mini'
   | 'o3-pro'
-  // o1 Reasoning Models
+  | 'o3-deep-research'
+  // o1 Reasoning Models (deprecated)
   | 'o1'
   | 'o1-mini'
   | 'o1-pro'
@@ -32,8 +46,10 @@ export type OpenAIModel =
   | 'gpt-4-turbo'
   | 'gpt-3.5-turbo';
 
-// Anthropic Models (January 2026)
+// Anthropic Models (February 2026)
 export type AnthropicModel =
+  // Claude 4.6 Series (latest)
+  | 'claude-opus-4-6'
   // Claude 4.5 Series (current flagship)
   | 'claude-sonnet-4-5'
   | 'claude-haiku-4-5'
@@ -52,11 +68,13 @@ export type AnthropicModel =
   | 'claude-3-opus-latest'
   | 'claude-3-haiku-20240307';
 
-// Google Gemini Models (January 2026)
+// Google Gemini Models (February 2026)
 export type GoogleModel =
-  // Gemini 3 Series (preview)
+  // Gemini 3 Series (latest)
   | 'gemini-3-pro-preview'
   | 'gemini-3-flash-preview'
+  | 'gemini-3-pro'
+  | 'gemini-3-flash'
   // Gemini 2.5 Series (production)
   | 'gemini-2.5-pro'
   | 'gemini-2.5-flash'
