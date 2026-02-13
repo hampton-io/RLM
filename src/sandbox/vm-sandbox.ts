@@ -184,6 +184,15 @@ export class VMSandbox implements SandboxEnvironment {
       __setVar__: (name: string, value: unknown) => {
         this.variables[name] = value;
       },
+
+      // Explicit store/get for persisting values across code blocks
+      store: (name: string, value: unknown) => {
+        this.variables[name] = value;
+        return value;
+      },
+      get: (name: string) => {
+        return this.variables[name];
+      },
     });
 
     // Inject all registered tools
@@ -209,11 +218,18 @@ export class VMSandbox implements SandboxEnvironment {
     this.isExecuting = true;
 
     try {
+      // Transform const/let declarations to globalThis assignments for persistence
+      // This allows variables to survive across code blocks
+      const transformedCode = code.replace(
+        /\b(const|let)\s+(\w+)\s*=/g,
+        'globalThis.$2 ='
+      );
+
       // Wrap code in an async IIFE
       const wrappedCode = `
         (async () => {
           try {
-            ${code}
+            ${transformedCode}
           } catch (e) {
             console.error(e.message || e);
             throw e;

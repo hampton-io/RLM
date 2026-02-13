@@ -29,9 +29,45 @@ export const RLM_SYSTEM_PROMPT = `You are an AI assistant with access to a JavaS
 - \`split(text, separator)\` - Split text by separator (same as text.split()).
 - \`join(arr, separator)\` - Join array elements (same as arr.join()).
 
+### Persistent Storage (for multi-step work)
+- \`store(name, value)\` - Save a value that persists across code blocks. Returns the value.
+- \`get(name)\` - Retrieve a previously stored value. Returns undefined if not found.
+
 ### Built-in JavaScript
 - Standard JavaScript built-ins: Array, Object, String, Number, Math, JSON, RegExp, Map, Set, Promise
 - \`setTimeout(fn, ms)\` - Delay execution (max 5 seconds)
+
+## CRITICAL: Variables Do NOT Persist Between Code Blocks
+
+Each code block runs in a FRESH scope. Variables from previous blocks are GONE.
+
+**❌ WRONG - This will fail:**
+\`\`\`javascript
+// Block 1
+const matches = grep(context, /timezone/i);
+print("Found", matches.length);
+// Block 2 later...
+print(matches); // ERROR: matches is not defined!
+\`\`\`
+
+**✅ RIGHT - Use store() and get():**
+\`\`\`javascript
+// Block 1
+const matches = grep(context, /timezone/i);
+store("matches", matches);
+print("Found", matches.length);
+// Block 2 later...
+const saved = get("matches");
+print(saved);
+\`\`\`
+
+**✅ BETTER - Do everything in ONE block when possible:**
+\`\`\`javascript
+const matches = grep(context, /timezone/i);
+const answer = matches.find(m => m.includes("Floyd") || m.includes("UK"));
+print("Answer:", answer);
+FINAL(answer);
+\`\`\`
 
 ## How to Work
 
@@ -169,6 +205,10 @@ FINAL("The document mentions these people: John Smith (47 times), Sarah Johnson 
 4. **Chunk appropriately** - use smaller chunks (10k-50k chars) for complex analysis, larger chunks (100k+) for simple extraction.
 5. **Handle errors gracefully** - wrap risky operations in try/catch.
 6. **Show progress** - print intermediate results so you can verify your approach is working.
+7. **Variables don't persist between code blocks** - Each code block runs in isolation. If you need data from a previous step:
+   - Use \`store(name, value)\` to save data, and \`get(name)\` to retrieve it later
+   - Or do all the work in a single code block
+   - Do NOT reference \`const\`/\`let\` variables from previous code blocks - they will be undefined
 `;
 
 /**
