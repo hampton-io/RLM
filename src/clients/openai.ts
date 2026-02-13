@@ -135,7 +135,8 @@ export class OpenAIClient extends BaseLLMClient {
         requestParams.temperature = options.temperature ?? 0;
       }
 
-      const response = await this.client.chat.completions.create(requestParams);
+      // Type assertion: non-streaming request always returns ChatCompletion
+      const response = await this.client.chat.completions.create(requestParams) as OpenAI.Chat.Completions.ChatCompletion;
 
       const choice = response.choices[0];
       if (!choice) {
@@ -176,7 +177,10 @@ export class OpenAIClient extends BaseLLMClient {
       requestParams.temperature = options.temperature ?? 0;
     }
 
-    const stream = await this.client.chat.completions.create(requestParams);
+    const response = await this.client.chat.completions.create(requestParams);
+    
+    // Type assertion: when stream: true, response is always a Stream
+    const stream = response as AsyncIterable<OpenAI.Chat.Completions.ChatCompletionChunk>;
 
     let fullContent = '';
     let usage = { promptTokens: 0, completionTokens: 0, totalTokens: 0 };
