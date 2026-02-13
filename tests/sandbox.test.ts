@@ -60,6 +60,28 @@ describe('VMSandbox', () => {
     expect(result.output).toContain('foo baz');
   });
 
+  it('should handle sticky regex flags safely', async () => {
+    const result = await sandbox.execute(`
+      const text = "foo\\nfoo\\nbar";
+      const matches = grep(text, /foo/y);
+      print(JSON.stringify(matches));
+    `);
+
+    expect(result.error).toBeUndefined();
+    expect(result.output).toContain('["foo","foo"]');
+  });
+
+  it('should handle global regex flags safely', async () => {
+    const result = await sandbox.execute(`
+      const text = "foo\\nfoo\\nbar";
+      const matches = grep(text, /foo/g);
+      print(JSON.stringify(matches));
+    `);
+
+    expect(result.error).toBeUndefined();
+    expect(result.output).toContain('["foo","foo"]');
+  });
+
   it('should use len utility', async () => {
     const result = await sandbox.execute(`
       print(len(context));
@@ -67,6 +89,16 @@ describe('VMSandbox', () => {
 
     expect(result.error).toBeUndefined();
     expect(result.output).toBe('47'); // Length of test context
+  });
+
+  it('should block code generation escapes', async () => {
+    const result = await sandbox.execute(`
+      const getProcess = this.constructor.constructor('return process');
+      print(getProcess());
+    `);
+
+    expect(result.error).toBeDefined();
+    expect(result.error).toMatch(/code generation|constructor|undefined/i);
   });
 
   it('should handle errors gracefully', async () => {

@@ -403,6 +403,7 @@ async function main(): Promise<void> {
       model,
       verbose: options.verbose,
       maxIterations: options.maxIterations,
+      maxCost: options.maxCost,
     });
 
     if (options.verbose) {
@@ -415,7 +416,11 @@ async function main(): Promise<void> {
       model: config.model,
       verbose: config.verbose,
       maxIterations: config.maxIterations,
+      maxDepth: config.maxDepth,
+      sandboxTimeout: config.sandboxTimeout,
       temperature: config.temperature,
+      maxCost: config.maxCost,
+      maxTokens: config.maxTokens,
       image,
     });
 

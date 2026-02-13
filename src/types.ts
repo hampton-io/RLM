@@ -483,6 +483,8 @@ export const CompletionRequestSchema = z.object({
     model: z.string().optional(),
     maxIterations: z.number().positive().optional(),
     maxDepth: z.number().nonnegative().optional(),
+    maxCost: z.number().positive().optional(),
+    maxTokens: z.number().positive().optional(),
     temperature: z.number().min(0).max(2).optional(),
     stream: z.boolean().optional(),
   }).optional(),
