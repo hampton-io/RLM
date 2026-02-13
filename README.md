@@ -4,10 +4,25 @@ A Node.js/TypeScript implementation of Recursive Language Models based on the re
 
 RLM enables LLMs to process **arbitrarily long contexts** by treating them as an external environment that can be programmatically explored via a JavaScript REPL. Instead of feeding entire long documents into the model's context window, RLM allows the model to write code to search, analyze, and recursively query smaller chunks.
 
+## Performance Benchmarks (v0.5.0)
+
+| Model | Speed | Cost/Query | Notes |
+|-------|-------|------------|-------|
+| **gpt-5.2** | 1.0s | $0.0008 | Fastest overall |
+| gpt-5.1 | 2.0s | $0.0009 | Very fast |
+| **gemini-2.0-flash** | 2.7s | $0.0005 | Best value (default) |
+| gpt-5-mini | 4.0s | $0.0012 | Reasoning model |
+| gpt-4.1 | 5.0s | $0.0104 | Reliable |
+| claude-haiku-4-5 | 7.0s | $0.0068 | Fast Anthropic |
+| claude-opus-4-6 | 18.7s | $0.1137 | Best quality |
+
+See [docs/MODEL-BENCHMARK.md](./docs/MODEL-BENCHMARK.md) for full results across 25+ models.
+
 ## Features
 
 - **Unlimited Context Length**: Process documents far larger than any model's context window
-- **Multi-Provider Support**: Works with OpenAI (GPT-5, GPT-4o, o3, o1), Anthropic (Claude 4.5), and Google (Gemini 3, 2.5)
+- **Multi-Provider Support**: OpenAI (GPT-5.x, GPT-4.x, o3, o4), Anthropic (Claude 4.5/4.6), Google (Gemini 2/2.5/3)
+- **Reasoning Model Support**: Automatic handling of gpt-5, o3, o4 models (no temperature parameter)
 - **Streaming Support**: Real-time progress updates during execution
 - **Secure Sandbox**: Code execution in isolated VM environment with 14 built-in tools
 - **Recursive Sub-Queries**: LLM can spawn sub-calls to itself over context chunks
@@ -50,7 +65,7 @@ import { RLM } from './src/index.js';  // or 'rlm' if installed from GitHub
 // Set your API key
 process.env.OPENAI_API_KEY = 'your-key-here';
 
-const rlm = new RLM({ model: 'gpt-4o-mini' });
+const rlm = new RLM({ model: 'gemini-2.0-flash' });  // Default model
 
 const result = await rlm.completion(
   "Find all mentions of 'climate change' in this document",
@@ -121,7 +136,7 @@ Options:
   -c, --context <text>           Inline context string
   -f, --file <path>              Path to context file
   --stdin                        Read context from stdin
-  -m, --model <model>            Model to use (default: gpt-4o-mini)
+  -m, --model <model>            Model to use (default: gemini-2.0-flash)
   -v, --verbose                  Enable verbose output
   -s, --stream                   Stream output events
   --max-iterations <n>           Maximum iterations (default: 20)
@@ -272,23 +287,25 @@ for await (const event of rlm.stream(query, context)) {
 
 ### Supported Models
 
-| Provider | Models | Description |
-|----------|--------|-------------|
-| **OpenAI** | | |
-| | `gpt-5`, `gpt-5-mini`, `gpt-5.1`, `gpt-5.2` | GPT-5 Series - Latest flagship reasoning models |
-| | `gpt-4.1`, `gpt-4.1-mini`, `gpt-4.1-nano` | GPT-4.1 Series |
-| | `gpt-4o`, `gpt-4o-mini` | GPT-4o Series |
-| | `o3`, `o3-mini`, `o3-pro` | o3 Reasoning Models |
-| | `o1`, `o1-mini`, `o1-pro` | o1 Reasoning Models |
-| | `gpt-4-turbo`, `gpt-3.5-turbo` | Legacy models |
-| **Anthropic** | | |
-| | `claude-sonnet-4-5`, `claude-haiku-4-5`, `claude-opus-4-5` | Claude 4.5 Series - Current flagship |
-| | `claude-sonnet-4`, `claude-opus-4`, `claude-opus-4-1` | Claude 4 Series (legacy) |
-| | `claude-3-5-sonnet-latest`, `claude-3-5-haiku-latest`, `claude-3-opus-latest` | Claude 3.x (deprecated) |
-| **Google** | | |
-| | `gemini-3-pro-preview`, `gemini-3-flash-preview` | Gemini 3 Series (preview) |
-| | `gemini-2.5-pro`, `gemini-2.5-flash`, `gemini-2.5-flash-lite` | Gemini 2.5 Series (production) |
-| | `gemini-2.0-flash`, `gemini-2.0-flash-lite` | Gemini 2.0 Series |
+| Provider | Models | Type | Notes |
+|----------|--------|------|-------|
+| **OpenAI** | | | |
+| | `gpt-5.2` | Chat | Fastest (1.0s) |
+| | `gpt-5.1` | Chat | Very fast (2.0s) |
+| | `gpt-5`, `gpt-5-mini`, `gpt-5-nano` | Reasoning | Hidden chain-of-thought |
+| | `gpt-4.1`, `gpt-4.1-mini`, `gpt-4.1-nano` | Chat | Reliable |
+| | `gpt-4o`, `gpt-4o-mini` | Chat | |
+| | `o3`, `o3-mini`, `o4-mini` | Reasoning | No temperature support |
+| **Anthropic** | | | |
+| | `claude-opus-4-6` | Chat | Latest, best quality |
+| | `claude-opus-4-5`, `claude-sonnet-4-5`, `claude-haiku-4-5` | Chat | Production |
+| **Google** | | | |
+| | `gemini-2.0-flash` | Chat | **Default** (fastest + cheapest) |
+| | `gemini-2.0-flash-lite` | Chat | Cheapest ($0.0004) |
+| | `gemini-2.5-flash`, `gemini-2.5-pro` | Chat | Production |
+| | `gemini-3-flash-preview`, `gemini-3-pro-preview` | Chat | Preview |
+
+**Note:** Reasoning models (gpt-5, gpt-5-mini, gpt-5-nano, o3, o4) use hidden reasoning tokens and don't support the `temperature` parameter. RLM handles this automatically.
 
 ## Advanced Features
 
@@ -550,7 +567,7 @@ ANTHROPIC_API_KEY=sk-ant-...
 GOOGLE_API_KEY=...             # or GEMINI_API_KEY
 
 # Optional configuration
-RLM_MODEL=gpt-4o-mini          # Default model
+RLM_MODEL=gemini-2.0-flash     # Default model (fastest + cheapest)
 RLM_MAX_ITERATIONS=20          # Max REPL iterations
 RLM_MAX_DEPTH=1                # Max recursion depth
 RLM_SANDBOX_TIMEOUT=30000      # Sandbox timeout (ms)
@@ -708,7 +725,7 @@ See the [MCP Server README](./mcp-server/README.md) for full documentation.
 # Install dependencies
 npm install
 
-# Run tests (765 tests total: 670 core + 95 MCP server)
+# Run tests (673 tests)
 npm test
 
 # Run tests once
