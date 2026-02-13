@@ -28,13 +28,12 @@ import type {
 
 // Mock OpenAI SDK
 vi.mock('openai', () => {
-  return {
-    default: vi.fn().mockImplementation(() => ({
-      responses: {
-        create: vi.fn(),
-      },
-    })),
-  };
+  const MockOpenAI = vi.fn(function(this: any) {
+    this.responses = {
+      create: vi.fn(),
+    };
+  });
+  return { default: MockOpenAI };
 });
 
 // =============================================================================

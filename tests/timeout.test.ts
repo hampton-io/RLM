@@ -204,8 +204,9 @@ describe('Timeout Utilities', () => {
     it('should track elapsed time', async () => {
       const timer = new ExecutionTimer();
 
-      await new Promise((r) => setTimeout(r, 50));
+      await new Promise((r) => setTimeout(r, 55));
 
+      // Allow small timing variance (timers can fire slightly early)
       expect(timer.getElapsed()).toBeGreaterThanOrEqual(50);
     });
 
