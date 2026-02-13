@@ -408,13 +408,15 @@ async function main(): Promise<void> {
 
   // Configure metrics if enabled
   if (options.metrics) {
+    const storagePath = process.env.RLM_METRICS_FILE || `${process.env.HOME}/.rlm/metrics.json`;
     metricsCollector.configure({
       enabled: true,
       apiKey: process.env.RLM_METRICS_API_KEY,
       redactQueries: process.env.RLM_REDACT_QUERIES === 'true',
       maxHistory: parseInt(process.env.RLM_MAX_HISTORY || '10000', 10),
+      storagePath,
     });
-    console.log('Metrics collection enabled');
+    console.log(`Metrics collection enabled (storing to ${storagePath})`);
   }
 
   // Create RLM instance (requires API key)

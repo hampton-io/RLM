@@ -24,13 +24,16 @@ for (let i = 0; i < args.length; i++) {
   }
 }
 
-// Configure metrics
+// Configure metrics with file persistence
+const storagePath = process.env.RLM_METRICS_FILE || `${process.env.HOME}/.rlm/metrics.json`;
 metricsCollector.configure({
   enabled: true,
   apiKey: process.env.RLM_METRICS_API_KEY,
   redactQueries: process.env.RLM_REDACT_QUERIES === "true",
   maxHistory: parseInt(process.env.RLM_MAX_HISTORY || "10000", 10),
+  storagePath,
 });
+console.log(`Metrics storage: ${storagePath}`);
 
 // Middleware
 app.use(cors());
