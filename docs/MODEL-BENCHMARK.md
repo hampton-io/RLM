@@ -33,21 +33,24 @@
 
 | Model | Time | Tokens | Calls | Cost | Status |
 |-------|------|--------|-------|------|--------|
+| **gpt-5.2** | 1.0s | 39 | 1 | $0.0008 | ✅ Fastest OpenAI |
+| gpt-5.1 | 2.0s | 45 | 1 | $0.0009 | ✅ Very fast |
+| gpt-5-mini | 4.0s | 237 | 1 | $0.0012 | ✅ Reasoning model |
 | gpt-4.1 | 5.0s | 4,454 | 2 | $0.0104 | ✅ Good |
 | gpt-4o | 5.3s | 2,328 | 2 | $0.0081 | ✅ OK |
-| gpt-5-mini | 5.7s | 2,341 | 1 | $0.0036 | ✅ Fixed |
+| gpt-5-nano | 6.0s | 685 | 1 | $0.0009 | ✅ Reasoning model |
 | gpt-4.1-mini | 7.3s | 5,175 | 3 | $0.0024 | ✅ OK |
 | gpt-4o-mini | 8.3s | 7,100 | 4 | $0.0012 | ✅ Reliable |
 | gpt-4.1-nano | 9.6s | 7,694 | 3 | $0.0009 | ✅ Cheapest OpenAI |
-| gpt-5 | ~6s | 2,963 | 1 | ~$0.005 | ✅ Fixed |
-| gpt-5-nano | ~6s | - | - | - | ✅ Fixed |
-| gpt-5.1 | - | - | - | - | ✅ Available |
-| gpt-5.1-codex | - | - | - | - | ✅ Available |
-| gpt-5.2 | - | - | - | - | ✅ Available |
-| gpt-5.2-codex | - | - | - | - | ✅ Available |
+| gpt-5 | 15.0s | 621 | 1 | $0.0050 | ✅ Heavy reasoning |
 | o3-mini | ~5s | 2,123 | 1 | ~$0.003 | ✅ Fixed |
 | o4-mini | ~6s | 2,634 | 1 | ~$0.004 | ✅ Fixed |
 | o3 | - | - | - | - | ✅ Fixed |
+| gpt-5.1-codex | - | - | - | - | ⚠️ Completions API only |
+| gpt-5.2-codex | - | - | - | - | ⚠️ Completions API only |
+| gpt-5.2-pro | - | - | - | - | ⚠️ Completions API only |
+
+**Note:** "codex" and "pro" variants use OpenAI's Completions API, not Chat. They're optimized for code completion, not conversation.
 
 ### Anthropic Claude Models
 
@@ -60,22 +63,26 @@
 
 ## Speed Rankings
 
-1. **gemini-2.0-flash** (2.7s)
-2. gemini-2.0-flash-lite (3.7s)
-3. gemini-2.5-flash (3.9s)
-4. gemini-2.5-flash-lite (4.8s)
-5. gpt-4.1 (5.0s)
-6. gpt-4o (5.3s)
-7. gemini-3-flash-preview (5.6s)
-8. gpt-5-mini (5.7s)
-9. claude-haiku-4-5 (7.0s)
-10. gpt-4.1-mini (7.3s)
-11. gemini-2.5-pro (7.4s)
-12. gpt-4o-mini (8.3s)
-13. gpt-4.1-nano (9.6s)
-14. claude-sonnet-4-5 (14.5s)
-15. claude-opus-4-5 (16.6s)
-16. claude-opus-4-6 (18.7s)
+1. **gpt-5.2** (1.0s) ⚡ Fastest overall
+2. gpt-5.1 (2.0s)
+3. **gemini-2.0-flash** (2.7s) ⚡ Fastest Gemini
+4. gemini-2.0-flash-lite (3.7s)
+5. gemini-2.5-flash (3.9s)
+6. gpt-5-mini (4.0s)
+7. gemini-2.5-flash-lite (4.8s)
+8. gpt-4.1 (5.0s)
+9. gpt-4o (5.3s)
+10. gemini-3-flash-preview (5.6s)
+11. gpt-5-nano (6.0s)
+12. claude-haiku-4-5 (7.0s) ⚡ Fastest Anthropic
+13. gpt-4.1-mini (7.3s)
+14. gemini-2.5-pro (7.4s)
+15. gpt-4o-mini (8.3s)
+16. gpt-4.1-nano (9.6s)
+17. claude-sonnet-4-5 (14.5s)
+18. gpt-5 (15.0s)
+19. claude-opus-4-5 (16.6s)
+20. claude-opus-4-6 (18.7s)
 
 ## Cost Rankings
 
@@ -95,6 +102,38 @@
 14. claude-sonnet-4-5 ($0.0184)
 15. claude-opus-4-5 ($0.0301)
 16. claude-opus-4-6 ($0.1137)
+
+## Model Types Explained
+
+### Reasoning Models (Hidden Chain-of-Thought)
+These models use internal "reasoning tokens" before producing output. They need higher `max_completion_tokens` to complete.
+
+| Model | Type | Reasoning Overhead | Best For |
+|-------|------|-------------------|----------|
+| gpt-5 | Reasoning | ~576 tokens | Complex analysis |
+| gpt-5-mini | Reasoning | ~192 tokens | Balanced reasoning |
+| gpt-5-nano | Reasoning | ~640 tokens | Efficient reasoning |
+| o3, o3-mini | Reasoning | Varies | Math, code |
+| o4-mini | Reasoning | Varies | General |
+
+### Standard Chat Models
+Direct output, no hidden reasoning, faster and cheaper.
+
+| Model | Type | Notes |
+|-------|------|-------|
+| gpt-5.1 | Chat | Very fast (2s) |
+| gpt-5.2 | Chat | Fastest OpenAI (1s) |
+| gpt-4.1, gpt-4o | Chat | Reliable |
+| All Gemini | Chat | Fast and cheap |
+| All Claude | Chat | High quality |
+
+### Completions API Only (Not Chat)
+These models use OpenAI's legacy Completions API for code completion:
+
+- gpt-5.1-codex, gpt-5.1-codex-mini
+- gpt-5.2-codex, gpt-5.2-pro
+
+**RLM only supports Chat API models.** Use these codex models via OpenAI's Completions endpoint directly.
 
 ## Issues Fixed
 
@@ -131,12 +170,14 @@ function isReasoningModel(model: string): boolean {
 
 | Use Case | Recommended Model | Reason |
 |----------|-------------------|--------|
-| **Speed** | gemini-2.0-flash | 2.7s, fastest by 2x |
+| **Speed** | gpt-5.2 | 1.0s, fastest overall |
+| **Speed (Gemini)** | gemini-2.0-flash | 2.7s, fastest Gemini |
 | **Cost** | gemini-2.0-flash-lite | $0.0004, cheapest |
 | **Quality** | claude-opus-4-6 | Most thorough reasoning |
-| **Balance** | gemini-2.5-flash | Good speed/cost/quality |
-| **Coding** | gpt-5.2-codex | Optimized for agentic tasks |
-| **OpenAI Best** | gpt-4.1 | Fast, reliable, good quality |
+| **Balance** | gpt-5.1 or gemini-2.5-flash | Fast + good quality |
+| **Complex Analysis** | gpt-5 | Heavy reasoning model |
+| **Coding (Chat)** | gpt-5.2 | Fast, good for code |
+| **Coding (Completion)** | gpt-5.2-codex | Completions API only |
 
 ### Default Model
 
