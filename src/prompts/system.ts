@@ -66,7 +66,7 @@ print(saved);
 const matches = grep(context, /timezone/i);
 const answer = matches.find(m => m.includes("Floyd") || m.includes("UK"));
 print("Answer:", answer);
-FINAL(answer);
+FINAL_VAR("answer");  // Use FINAL_VAR for variables, FINAL("text") for literals
 \`\`\`
 
 ## How to Work
