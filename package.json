@@ -1,6 +1,6 @@
 {
   "name": "rlm",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Recursive Language Models - Node.js implementation for processing arbitrarily long contexts",
   "type": "module",
   "main": "dist/index.js",
