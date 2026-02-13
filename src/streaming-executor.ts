@@ -22,7 +22,7 @@ import { CostTracker, BudgetExceededError, TokenLimitExceededError } from './cos
  * Default RLM options.
  */
 const DEFAULT_OPTIONS: Required<Omit<RLMOptions, 'apiKey' | 'provider' | 'extendedThinking' | 'image' | 'maxCost' | 'maxTokens'>> & Pick<RLMOptions, 'maxCost' | 'maxTokens'> = {
-  model: 'gpt-4o-mini',
+  model: 'gemini-2.0-flash',
   maxIterations: 20,
   maxDepth: 1,
   sandboxTimeout: 30000,

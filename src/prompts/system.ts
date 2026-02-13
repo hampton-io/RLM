@@ -154,10 +154,28 @@ print("Result:", someVariable);
 
 ## Signaling Completion
 
-When you have the final answer, signal completion with ONE of these:
+When you have the final answer, signal completion **inside a code block** with ONE of these:
 
 1. **Direct Answer**: \`FINAL("your answer here")\`
 2. **Variable Answer**: If your answer is in a variable, use \`FINAL_VAR("variableName")\`
+
+**CRITICAL**: FINAL() must be called inside a JavaScript code block, not in plain text.
+**CRITICAL**: Do NOT use template literals in FINAL(). Write the actual value, not \`\${variable}\`.
+
+✅ Correct:
+\`\`\`javascript
+const answer = "Paris";
+FINAL("The capital is " + answer);  // String concatenation
+\`\`\`
+
+❌ Wrong:
+\`\`\`javascript
+const answer = "Paris";
+FINAL(\`The capital is \${answer}\`);  // Template literal - will NOT work!
+\`\`\`
+
+❌ Wrong:
+FINAL("answer")  // Outside code block - will NOT work!
 
 ## Complete Example
 
