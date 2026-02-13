@@ -1,14 +1,15 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
-// Mock the Google GenAI SDK
-vi.mock('@google/genai', () => {
+// Mock the Google GenAI SDK - everything must be inside the factory due to hoisting
+vi.mock('@google/genai', async (importOriginal) => {
+  const { vi: vitest } = await import('vitest');
   return {
-    GoogleGenAI: vi.fn().mockImplementation(() => ({
-      models: {
-        generateContent: vi.fn(),
-        generateContentStream: vi.fn(),
-      },
-    })),
+    GoogleGenAI: vitest.fn(function MockGoogleGenAI(this: any) {
+      this.models = {
+        generateContent: vitest.fn(),
+        generateContentStream: vitest.fn(),
+      };
+    }),
   };
 });
 
@@ -88,12 +89,12 @@ describe('GoogleClient', () => {
       };
 
       const mockGenerateContent = vi.fn().mockResolvedValue(mockResponse);
-      (GoogleGenAI as any).mockImplementation(() => ({
+      (GoogleGenAI as any).mockImplementation(function(this: any) { Object.assign(this, {
         models: {
           generateContent: mockGenerateContent,
           generateContentStream: vi.fn(),
         },
-      }));
+      }); });
 
       const client = new GoogleClient('gemini-2.0-flash', { apiKey: 'test-key' });
       const result = await client.completion([
@@ -119,12 +120,12 @@ describe('GoogleClient', () => {
       };
 
       const mockGenerateContent = vi.fn().mockResolvedValue(mockResponse);
-      (GoogleGenAI as any).mockImplementation(() => ({
+      (GoogleGenAI as any).mockImplementation(function(this: any) { Object.assign(this, {
         models: {
           generateContent: mockGenerateContent,
           generateContentStream: vi.fn(),
         },
-      }));
+      }); });
 
       const client = new GoogleClient('gemini-2.0-flash', { apiKey: 'test-key' });
       await client.completion([
@@ -153,12 +154,12 @@ describe('GoogleClient', () => {
       };
 
       const mockGenerateContent = vi.fn().mockResolvedValue(mockResponse);
-      (GoogleGenAI as any).mockImplementation(() => ({
+      (GoogleGenAI as any).mockImplementation(function(this: any) { Object.assign(this, {
         models: {
           generateContent: mockGenerateContent,
           generateContentStream: vi.fn(),
         },
-      }));
+      }); });
 
       const client = new GoogleClient('gemini-2.0-flash', { apiKey: 'test-key' });
       await client.completion([
@@ -187,12 +188,12 @@ describe('GoogleClient', () => {
       };
 
       const mockGenerateContent = vi.fn().mockResolvedValue(mockResponse);
-      (GoogleGenAI as any).mockImplementation(() => ({
+      (GoogleGenAI as any).mockImplementation(function(this: any) { Object.assign(this, {
         models: {
           generateContent: mockGenerateContent,
           generateContentStream: vi.fn(),
         },
-      }));
+      }); });
 
       const client = new GoogleClient('gemini-2.0-flash', { apiKey: 'test-key' });
       await client.completion([{ role: 'user', content: 'Hi' }], {
@@ -220,12 +221,12 @@ describe('GoogleClient', () => {
       };
 
       const mockGenerateContent = vi.fn().mockResolvedValue(mockResponse);
-      (GoogleGenAI as any).mockImplementation(() => ({
+      (GoogleGenAI as any).mockImplementation(function(this: any) { Object.assign(this, {
         models: {
           generateContent: mockGenerateContent,
           generateContentStream: vi.fn(),
         },
-      }));
+      }); });
 
       const client = new GoogleClient('gemini-2.0-flash', { apiKey: 'test-key' });
       const result = await client.completion([{ role: 'user', content: 'Long story' }]);
@@ -241,12 +242,12 @@ describe('GoogleClient', () => {
       };
 
       const mockGenerateContent = vi.fn().mockResolvedValue(mockResponse);
-      (GoogleGenAI as any).mockImplementation(() => ({
+      (GoogleGenAI as any).mockImplementation(function(this: any) { Object.assign(this, {
         models: {
           generateContent: mockGenerateContent,
           generateContentStream: vi.fn(),
         },
-      }));
+      }); });
 
       const client = new GoogleClient('gemini-2.0-flash', { apiKey: 'test-key' });
       const result = await client.completion([{ role: 'user', content: 'Bad content' }]);
@@ -256,12 +257,12 @@ describe('GoogleClient', () => {
 
     it('should handle API errors', async () => {
       const mockGenerateContent = vi.fn().mockRejectedValue(new Error('API Error'));
-      (GoogleGenAI as any).mockImplementation(() => ({
+      (GoogleGenAI as any).mockImplementation(function(this: any) { Object.assign(this, {
         models: {
           generateContent: mockGenerateContent,
           generateContentStream: vi.fn(),
         },
-      }));
+      }); });
 
       const client = new GoogleClient('gemini-2.0-flash', { apiKey: 'test-key' });
 
@@ -278,12 +279,12 @@ describe('GoogleClient', () => {
       };
 
       const mockGenerateContent = vi.fn().mockResolvedValue(mockResponse);
-      (GoogleGenAI as any).mockImplementation(() => ({
+      (GoogleGenAI as any).mockImplementation(function(this: any) { Object.assign(this, {
         models: {
           generateContent: mockGenerateContent,
           generateContentStream: vi.fn(),
         },
-      }));
+      }); });
 
       const client = new GoogleClient('gemini-2.0-flash', { apiKey: 'test-key' });
       const result = await client.completion([{ role: 'user', content: 'Hi' }]);
@@ -301,12 +302,12 @@ describe('GoogleClient', () => {
       };
 
       const mockGenerateContent = vi.fn().mockResolvedValue(mockResponse);
-      (GoogleGenAI as any).mockImplementation(() => ({
+      (GoogleGenAI as any).mockImplementation(function(this: any) { Object.assign(this, {
         models: {
           generateContent: mockGenerateContent,
           generateContentStream: vi.fn(),
         },
-      }));
+      }); });
 
       const client = new GoogleClient('gemini-2.0-flash', { apiKey: 'test-key' });
       const result = await client.completion([{ role: 'user', content: 'Hi' }]);
@@ -328,12 +329,12 @@ describe('GoogleClient', () => {
       })();
 
       const mockGenerateContentStream = vi.fn().mockResolvedValue(mockStream);
-      (GoogleGenAI as any).mockImplementation(() => ({
+      (GoogleGenAI as any).mockImplementation(function(this: any) { Object.assign(this, {
         models: {
           generateContent: vi.fn(),
           generateContentStream: mockGenerateContentStream,
         },
-      }));
+      }); });
 
       const client = new GoogleClient('gemini-2.0-flash', { apiKey: 'test-key' });
       const chunks: string[] = [];
@@ -362,12 +363,12 @@ describe('GoogleClient', () => {
       })();
 
       const mockGenerateContentStream = vi.fn().mockResolvedValue(mockStream);
-      (GoogleGenAI as any).mockImplementation(() => ({
+      (GoogleGenAI as any).mockImplementation(function(this: any) { Object.assign(this, {
         models: {
           generateContent: vi.fn(),
           generateContentStream: mockGenerateContentStream,
         },
-      }));
+      }); });
 
       const client = new GoogleClient('gemini-2.0-flash', { apiKey: 'test-key' });
       const generator = client.streamCompletion([{ role: 'user', content: 'Test' }]);
@@ -399,12 +400,12 @@ describe('GoogleClient', () => {
       })();
 
       const mockGenerateContentStream = vi.fn().mockResolvedValue(mockStream);
-      (GoogleGenAI as any).mockImplementation(() => ({
+      (GoogleGenAI as any).mockImplementation(function(this: any) { Object.assign(this, {
         models: {
           generateContent: vi.fn(),
           generateContentStream: mockGenerateContentStream,
         },
-      }));
+      }); });
 
       const client = new GoogleClient('gemini-2.0-flash', { apiKey: 'test-key' });
       const generator = client.streamCompletion([
@@ -437,12 +438,12 @@ describe('GoogleClient', () => {
       })();
 
       const mockGenerateContentStream = vi.fn().mockResolvedValue(mockStream);
-      (GoogleGenAI as any).mockImplementation(() => ({
+      (GoogleGenAI as any).mockImplementation(function(this: any) { Object.assign(this, {
         models: {
           generateContent: vi.fn(),
           generateContentStream: mockGenerateContentStream,
         },
-      }));
+      }); });
 
       const client = new GoogleClient('gemini-2.0-flash', { apiKey: 'test-key' });
       const chunks: string[] = [];
@@ -467,12 +468,12 @@ describe('GoogleClient', () => {
       };
 
       const mockGenerateContent = vi.fn().mockResolvedValue(mockResponse);
-      (GoogleGenAI as any).mockImplementation(() => ({
+      (GoogleGenAI as any).mockImplementation(function(this: any) { Object.assign(this, {
         models: {
           generateContent: mockGenerateContent,
           generateContentStream: vi.fn(),
         },
-      }));
+      }); });
 
       const client = new GoogleClient('gemini-2.0-flash', { apiKey: 'test-key' });
       await client.completion([
@@ -493,12 +494,12 @@ describe('GoogleClient', () => {
       };
 
       const mockGenerateContent = vi.fn().mockResolvedValue(mockResponse);
-      (GoogleGenAI as any).mockImplementation(() => ({
+      (GoogleGenAI as any).mockImplementation(function(this: any) { Object.assign(this, {
         models: {
           generateContent: mockGenerateContent,
           generateContentStream: vi.fn(),
         },
-      }));
+      }); });
 
       const client = new GoogleClient('gemini-2.0-flash', { apiKey: 'test-key' });
       await client.completion([
@@ -545,12 +546,12 @@ describe('GoogleClient', () => {
       };
 
       const mockGenerateContent = vi.fn().mockResolvedValue(mockResponse);
-      (GoogleGenAI as any).mockImplementation(() => ({
+      (GoogleGenAI as any).mockImplementation(function(this: any) { Object.assign(this, {
         models: {
           generateContent: mockGenerateContent,
           generateContentStream: vi.fn(),
         },
-      }));
+      }); });
 
       const client = new GoogleClient('gemini-2.0-flash', { apiKey: 'test-key' });
       await client.completion([
@@ -590,12 +591,12 @@ describe('GoogleClient', () => {
       (rateLimitError as any).status = 429;
 
       const mockGenerateContent = vi.fn().mockRejectedValue(rateLimitError);
-      (GoogleGenAI as any).mockImplementation(() => ({
+      (GoogleGenAI as any).mockImplementation(function(this: any) { Object.assign(this, {
         models: {
           generateContent: mockGenerateContent,
           generateContentStream: vi.fn(),
         },
-      }));
+      }); });
 
       const client = new GoogleClient('gemini-2.0-flash', { apiKey: 'test-key' });
 
@@ -609,12 +610,12 @@ describe('GoogleClient', () => {
       (serverError as any).status = 500;
 
       const mockGenerateContent = vi.fn().mockRejectedValue(serverError);
-      (GoogleGenAI as any).mockImplementation(() => ({
+      (GoogleGenAI as any).mockImplementation(function(this: any) { Object.assign(this, {
         models: {
           generateContent: mockGenerateContent,
           generateContentStream: vi.fn(),
         },
-      }));
+      }); });
 
       const client = new GoogleClient('gemini-2.0-flash', { apiKey: 'test-key' });
 
@@ -628,12 +629,12 @@ describe('GoogleClient', () => {
       (authError as any).status = 401;
 
       const mockGenerateContent = vi.fn().mockRejectedValue(authError);
-      (GoogleGenAI as any).mockImplementation(() => ({
+      (GoogleGenAI as any).mockImplementation(function(this: any) { Object.assign(this, {
         models: {
           generateContent: mockGenerateContent,
           generateContentStream: vi.fn(),
         },
-      }));
+      }); });
 
       const client = new GoogleClient('gemini-2.0-flash', { apiKey: 'bad-key' });
 
@@ -664,12 +665,12 @@ describe('GoogleClient', () => {
         };
 
         const mockGenerateContent = vi.fn().mockResolvedValue(mockResponse);
-        (GoogleGenAI as any).mockImplementation(() => ({
+        (GoogleGenAI as any).mockImplementation(function(this: any) { Object.assign(this, {
           models: {
             generateContent: mockGenerateContent,
             generateContentStream: vi.fn(),
           },
-        }));
+        }); });
 
         const client = new GoogleClient('gemini-2.0-flash', { apiKey: 'test-key' });
         const result = await client.completion([{ role: 'user', content: 'Hi' }]);
