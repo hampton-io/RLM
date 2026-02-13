@@ -16,6 +16,22 @@ import { BaseLLMClient } from './base.js';
 import type { LLMClientConfig } from './types.js';
 
 /**
+ * Check if a model is a reasoning model that doesn't support temperature.
+ * Reasoning models (o-series, gpt-5.x) use internal reasoning and don't accept temperature.
+ */
+function isReasoningModel(model: string): boolean {
+  // o-series models (o1, o3, o4)
+  if (model.startsWith('o1') || model.startsWith('o3') || model.startsWith('o4')) {
+    return true;
+  }
+  // GPT-5.x models (gpt-5, gpt-5.1, gpt-5.2, gpt-5-mini, gpt-5-nano, gpt-5-pro)
+  if (model.startsWith('gpt-5')) {
+    return true;
+  }
+  return false;
+}
+
+/**
  * OpenAI client implementation.
  */
 export class OpenAIClient extends BaseLLMClient {
@@ -106,13 +122,20 @@ export class OpenAIClient extends BaseLLMClient {
    */
   async completion(messages: Message[], options: CompletionOptions = {}): Promise<CompletionResult> {
     return this.withRetry(async () => {
-      const response = await this.client.chat.completions.create({
+      // Build request params - reasoning models don't support temperature
+      const requestParams: Parameters<typeof this.client.chat.completions.create>[0] = {
         model: this.model,
         messages: this.convertMessages(messages),
-        temperature: options.temperature ?? 0,
         max_tokens: options.maxTokens,
         stop: options.stopSequences,
-      });
+      };
+      
+      // Only include temperature for non-reasoning models
+      if (!isReasoningModel(this.model)) {
+        requestParams.temperature = options.temperature ?? 0;
+      }
+
+      const response = await this.client.chat.completions.create(requestParams);
 
       const choice = response.choices[0];
       if (!choice) {
@@ -138,15 +161,22 @@ export class OpenAIClient extends BaseLLMClient {
     messages: Message[],
     options: CompletionOptions = {}
   ): AsyncGenerator<StreamChunk, CompletionResult, unknown> {
-    const stream = await this.client.chat.completions.create({
+    // Build request params - reasoning models don't support temperature
+    const requestParams: Parameters<typeof this.client.chat.completions.create>[0] = {
       model: this.model,
       messages: this.convertMessages(messages),
-      temperature: options.temperature ?? 0,
       max_tokens: options.maxTokens,
       stop: options.stopSequences,
       stream: true,
       stream_options: { include_usage: true },
-    });
+    };
+    
+    // Only include temperature for non-reasoning models
+    if (!isReasoningModel(this.model)) {
+      requestParams.temperature = options.temperature ?? 0;
+    }
+
+    const stream = await this.client.chat.completions.create(requestParams);
 
     let fullContent = '';
     let usage = { promptTokens: 0, completionTokens: 0, totalTokens: 0 };
