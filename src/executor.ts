@@ -148,7 +148,19 @@ export class RLMExecutor {
         // Check for final answer AFTER code execution (so FINAL_VAR can resolve)
         if (parsed.final) {
           if (parsed.final.type === 'FINAL') {
-            finalAnswer = parsed.final.value;
+            // Check if value looks like a bare variable name (no spaces, quotes, punctuation)
+            // If so, try to resolve it as a variable first
+            const value = parsed.final.value;
+            if (/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(value)) {
+              const varValue = sandbox.getVariable(value);
+              if (varValue !== undefined) {
+                finalAnswer = this.stringify(varValue);
+              } else {
+                finalAnswer = value;
+              }
+            } else {
+              finalAnswer = value;
+            }
           } else if (parsed.final.type === 'FINAL_VAR') {
             const varValue = sandbox.getVariable(parsed.final.value);
             finalAnswer = this.stringify(varValue);
