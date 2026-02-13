@@ -6,7 +6,7 @@ import { invalidConfigError } from './utils/errors.js';
  * Default configuration values.
  */
 export const DEFAULT_CONFIG = {
-  model: 'gpt-4o-mini' as SupportedModel,
+  model: 'gemini-2.0-flash' as SupportedModel,
   maxIterations: 20,
   maxDepth: 1,
   sandboxTimeout: 30000,
@@ -162,7 +162,13 @@ export function getApiKey(provider: ModelProvider, explicitKey?: string): string
 export function resolveConfig(options: RLMConfigOptions): ResolvedConfig {
   // Load env config first, then override with explicit options
   const envConfig = loadEnvConfig();
-  const merged = { ...DEFAULT_CONFIG, ...envConfig, ...options };
+  
+  // Filter out undefined values from options so they don't override defaults
+  const filteredOptions = Object.fromEntries(
+    Object.entries(options).filter(([_, v]) => v !== undefined)
+  );
+  
+  const merged = { ...DEFAULT_CONFIG, ...envConfig, ...filteredOptions };
 
   // Validate model
   if (!merged.model) {

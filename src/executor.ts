@@ -22,7 +22,7 @@ import { CostTracker, BudgetExceededError, TokenLimitExceededError } from './cos
  * Default RLM options.
  */
 const DEFAULT_OPTIONS: Required<Omit<RLMOptions, 'apiKey' | 'provider' | 'extendedThinking' | 'image' | 'maxCost' | 'maxTokens'>> & Pick<RLMOptions, 'maxCost' | 'maxTokens'> = {
-  model: 'gpt-4o-mini',
+  model: 'gemini-2.0-flash',
   maxIterations: 20,
   maxDepth: 1,
   sandboxTimeout: 10000,
@@ -170,7 +170,20 @@ export class RLMExecutor {
           if (parsed.final.type === 'FINAL') {
             // Check if value looks like a bare variable name (no spaces, quotes, punctuation)
             // If so, try to resolve it as a variable first
-            const value = parsed.final.value;
+            let value = parsed.final.value;
+            
+            // Resolve template literals like ${varName} from sandbox variables
+            // This handles cases where the model writes FINAL(`Answer: ${myVar}`) in text
+            if (value.includes('${')) {
+              value = value.replace(/\$\{(\w+)\}/g, (match, varName) => {
+                const varValue = sandbox.getVariable(varName);
+                if (varValue !== undefined) {
+                  return this.stringify(varValue);
+                }
+                return match; // Keep original if variable not found
+              });
+            }
+            
             if (/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(value)) {
               const varValue = sandbox.getVariable(value);
               if (varValue !== undefined) {
