@@ -17,6 +17,7 @@ import {
 } from './utils/index.js';
 import { RLMLogger } from './logger/index.js';
 import { CostTracker, BudgetExceededError, TokenLimitExceededError } from './cost-tracker.js';
+import { metricsCollector } from './metrics/index.js';
 
 /**
  * Default RLM options.
@@ -231,6 +232,20 @@ export class RLMExecutor {
       // Calculate total usage and cost
       const totalUsage = this.logger.getTotalUsage();
       const totalCost = calculateCost(this.options.model, totalUsage);
+      const executionTime = Date.now() - startTime;
+
+      // Record metrics
+      metricsCollector.record({
+        query,
+        contextBytes: context.length,
+        model: this.options.model,
+        iterations: iteration,
+        tokensIn: totalUsage.promptTokens,
+        tokensOut: totalUsage.completionTokens,
+        cost: totalCost,
+        durationMs: executionTime,
+        success: true,
+      });
 
       return {
         response: finalAnswer,
@@ -240,8 +255,27 @@ export class RLMExecutor {
           totalCalls: this.logger.getCallCount(),
           estimatedCost: totalCost,
         },
-        executionTime: Date.now() - startTime,
+        executionTime,
       };
+    } catch (error) {
+      // Record failed metric
+      const totalUsage = this.logger.getTotalUsage();
+      const totalCost = calculateCost(this.options.model, totalUsage);
+      
+      metricsCollector.record({
+        query,
+        contextBytes: context.length,
+        model: this.options.model,
+        iterations: 0,
+        tokensIn: totalUsage.promptTokens,
+        tokensOut: totalUsage.completionTokens,
+        cost: totalCost,
+        durationMs: Date.now() - startTime,
+        success: false,
+        error: error instanceof Error ? error.message : String(error),
+      });
+
+      throw error;
     } finally {
       sandbox.dispose();
     }
