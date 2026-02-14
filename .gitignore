@@ -33,3 +33,15 @@ coverage/
 # Misc
 *.tgz
 .rlm-sessions/
+
+# Security: Never commit these
+.rlm-sessions/
+*.pem
+*.key
+*.p12
+*.pfx
+.env
+.env.*
+!.env.example
+secrets/
+credentials/
