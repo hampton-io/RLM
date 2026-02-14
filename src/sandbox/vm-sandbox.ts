@@ -98,6 +98,7 @@ export class VMSandbox implements SandboxEnvironment {
     };
 
     const sandbox: Record<string, unknown> = Object.create(null);
+
     Object.assign(sandbox, {
       // The main context variable
       context: contextString,
@@ -194,10 +195,30 @@ export class VMSandbox implements SandboxEnvironment {
         return this.variables[name];
       },
 
+      // Helper: stringify any value properly (avoids [object Object])
+      // Use this when concatenating objects into strings
+      str: (value: unknown) => {
+        return this.stringify(value);
+      },
+      
+      // Helper: JSON.stringify shorthand
+      json: (value: unknown) => {
+        return JSON.stringify(value, null, 2);
+      },
+
       // FINAL functions - capture evaluated values (not raw text)
       // This allows template literals like FINAL(`Answer: ${myVar}`) to work
       FINAL: (value: unknown) => {
-        const stringValue = typeof value === 'string' ? value : this.stringify(value);
+        let stringValue = typeof value === 'string' ? value : this.stringify(value);
+        
+        // Detect and fix [object Object] corruption
+        // This happens when code does: "text " + someObject
+        if (stringValue.includes('[object Object]')) {
+          // Log warning but try to salvage by removing the corruption markers
+          console.warn('[RLM] Warning: FINAL value contains [object Object] - object was concatenated as string');
+          // Don't modify the value - let validation catch it
+        }
+        
         this.variables['__FINAL_ANSWER__'] = stringValue;
         return stringValue;
       },
@@ -213,12 +234,39 @@ export class VMSandbox implements SandboxEnvironment {
       sandbox[tool.name] = wrapToolFunction(tool);
     }
 
-    return vm.createContext(sandbox, {
+    const ctx = vm.createContext(sandbox, {
       codeGeneration: {
         strings: false,
         wasm: false,
       },
     });
+    
+    // Patch Object.prototype.toString to prevent [object Object] corruption
+    // When models write: "text " + obj, JavaScript calls obj.toString()
+    // By default this returns [object Object], losing the data
+    // This patch makes it return JSON instead
+    const patchScript = new vm.Script(`
+      (function() {
+        const originalToString = Object.prototype.toString;
+        Object.prototype.toString = function() {
+          // Only patch plain objects, not arrays, dates, etc.
+          if (this && typeof this === 'object' && 
+              this.constructor === Object && 
+              Object.getPrototypeOf(this) === Object.prototype) {
+            try {
+              return JSON.stringify(this);
+            } catch (e) {
+              // Circular reference or other error - fall back
+              return originalToString.call(this);
+            }
+          }
+          return originalToString.call(this);
+        };
+      })();
+    `);
+    patchScript.runInContext(ctx);
+    
+    return ctx;
   }
 
   /**
