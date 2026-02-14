@@ -38,6 +38,20 @@ const MODELS_TO_TEST = process.env.MODEL
 
 const MAX_RETRIES = 2; // Retry once on failure to handle LLM stochasticity
 
+/** Check if we have at least one API key configured. */
+const HAS_API_KEYS =
+  !!process.env.OPENAI_API_KEY ||
+  !!process.env.ANTHROPIC_API_KEY ||
+  !!process.env.GOOGLE_API_KEY ||
+  !!process.env.GEMINI_API_KEY;
+
+/** Check if a specific model's provider has a key available. */
+function hasKeyForModel(model: string): boolean {
+  if (model.startsWith('claude')) return !!process.env.ANTHROPIC_API_KEY;
+  if (model.startsWith('gemini')) return !!(process.env.GOOGLE_API_KEY || process.env.GEMINI_API_KEY);
+  return !!process.env.OPENAI_API_KEY; // openai is the default provider
+}
+
 // ---------------------------------------------------------------------------
 // Test contexts
 // ---------------------------------------------------------------------------
@@ -129,10 +143,16 @@ function record(r: TestResult) {
 // Tests
 // ---------------------------------------------------------------------------
 
-describe.each(MODELS_TO_TEST)('Model Protocol: %s', (model) => {
+// Skip entire suite in CI / environments without API keys
+const describeWithKeys = HAS_API_KEYS ? describe.each(MODELS_TO_TEST) : describe.skip.each(MODELS_TO_TEST);
+
+describeWithKeys('Model Protocol: %s', (model) => {
   let executor: RLMExecutor;
 
   beforeAll(() => {
+    if (!hasKeyForModel(model)) {
+      throw new Error(`No API key for ${model} — skipping`);
+    }
     executor = new RLMExecutor({
       model: model as any,
       maxIterations: 5,
