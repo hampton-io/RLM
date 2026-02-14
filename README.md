@@ -8,9 +8,8 @@ RLM enables LLMs to process **arbitrarily long contexts** by treating them as an
 
 | Model | Speed | Cost/Query | Notes |
 |-------|-------|------------|-------|
-| **gpt-5.2** | 1.0s | $0.0008 | Fastest overall |
+| **gpt-5.2** | 1.0s | $0.0008 | **Default** (fastest overall) |
 | gpt-5.1 | 2.0s | $0.0009 | Very fast |
-| **gemini-2.0-flash** | 2.7s | $0.0005 | Best value (default) |
 | gpt-5-mini | 4.0s | $0.0012 | Reasoning model |
 | gpt-4.1 | 5.0s | $0.0104 | Reliable |
 | claude-haiku-4-5 | 7.0s | $0.0068 | Fast Anthropic |
@@ -65,7 +64,7 @@ import { RLM } from './src/index.js';  // or 'rlm' if installed from GitHub
 // Set your API key
 process.env.OPENAI_API_KEY = 'your-key-here';
 
-const rlm = new RLM({ model: 'gemini-2.0-flash' });  // Default model
+const rlm = new RLM({ model: 'gpt-5.2' });  // Default model
 
 const result = await rlm.completion(
   "Find all mentions of 'climate change' in this document",
@@ -136,7 +135,7 @@ Options:
   -c, --context <text>           Inline context string
   -f, --file <path>              Path to context file
   --stdin                        Read context from stdin
-  -m, --model <model>            Model to use (default: gemini-2.0-flash)
+  -m, --model <model>            Model to use (default: gpt-5.2)
   -v, --verbose                  Enable verbose output
   -s, --stream                   Stream output events
   --max-iterations <n>           Maximum iterations (default: 20)
@@ -290,7 +289,7 @@ for await (const event of rlm.stream(query, context)) {
 | Provider | Models | Type | Notes |
 |----------|--------|------|-------|
 | **OpenAI** | | | |
-| | `gpt-5.2` | Chat | Fastest (1.0s) |
+| | `gpt-5.2` | Chat | **Default** (fastest, 1.0s) |
 | | `gpt-5.1` | Chat | Very fast (2.0s) |
 | | `gpt-5`, `gpt-5-mini`, `gpt-5-nano` | Reasoning | Hidden chain-of-thought |
 | | `gpt-4.1`, `gpt-4.1-mini`, `gpt-4.1-nano` | Chat | Reliable |
@@ -300,7 +299,7 @@ for await (const event of rlm.stream(query, context)) {
 | | `claude-opus-4-6` | Chat | Latest, best quality |
 | | `claude-opus-4-5`, `claude-sonnet-4-5`, `claude-haiku-4-5` | Chat | Production |
 | **Google** | | | |
-| | `gemini-2.0-flash` | Chat | **Default** (fastest + cheapest) |
+| | `gemini-2.0-flash` | Chat | Fastest + cheapest Gemini |
 | | `gemini-2.0-flash-lite` | Chat | Cheapest ($0.0004) |
 | | `gemini-2.5-flash`, `gemini-2.5-pro` | Chat | Production |
 | | `gemini-3-flash-preview`, `gemini-3-pro-preview` | Chat | Preview |
@@ -567,7 +566,7 @@ ANTHROPIC_API_KEY=sk-ant-...
 GOOGLE_API_KEY=...             # or GEMINI_API_KEY
 
 # Optional configuration
-RLM_MODEL=gemini-2.0-flash     # Default model (fastest + cheapest)
+RLM_MODEL=gpt-5.2              # Default model (fastest overall)
 RLM_MAX_ITERATIONS=20          # Max REPL iterations
 RLM_MAX_DEPTH=1                # Max recursion depth
 RLM_SANDBOX_TIMEOUT=30000      # Sandbox timeout (ms)

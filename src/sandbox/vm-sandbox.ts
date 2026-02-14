@@ -402,6 +402,11 @@ export class VMSandbox implements SandboxEnvironment {
    * Get a variable from the sandbox.
    */
   getVariable(name: string): unknown {
+    // Check variables first (where FINAL/FINAL_VAR store their values)
+    if (name in this.variables) {
+      return this.variables[name];
+    }
+    // Fall back to context
     return this.context[name];
   }
 

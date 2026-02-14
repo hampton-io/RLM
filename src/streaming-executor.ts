@@ -22,7 +22,7 @@ import { CostTracker, BudgetExceededError, TokenLimitExceededError } from './cos
  * Default RLM options.
  */
 const DEFAULT_OPTIONS: Required<Omit<RLMOptions, 'apiKey' | 'provider' | 'extendedThinking' | 'image' | 'maxCost' | 'maxTokens'>> & Pick<RLMOptions, 'maxCost' | 'maxTokens'> = {
-  model: 'gemini-2.0-flash',
+  model: 'gpt-5.2',
   maxIterations: 20,
   maxDepth: 1,
   sandboxTimeout: 30000,
@@ -132,34 +132,7 @@ export class RLMStreamingExecutor {
           });
         }
 
-        // Check for final answer
-        if (parsed.final) {
-          if (parsed.final.type === 'FINAL') {
-            finalAnswer = parsed.final.value;
-            finalMethod = 'FINAL';
-          } else if (parsed.final.type === 'FINAL_VAR') {
-            const varValue = sandbox.getVariable(parsed.final.value);
-            finalAnswer = this.stringify(varValue);
-            finalMethod = 'FINAL_VAR';
-          }
-
-          this.logger.logFinalOutput(
-            0,
-            finalAnswer ?? '',
-            parsed.final.type,
-            parsed.final.type === 'FINAL_VAR' ? parsed.final.value : undefined
-          );
-
-          // Emit final event
-          yield this.createEvent('final', {
-            response: finalAnswer ?? '',
-            method: finalMethod,
-          });
-
-          break;
-        }
-
-        // If there's code to execute
+        // Execute code FIRST if present (needed for FINAL/FINAL_VAR to work in code blocks)
         if (parsed.code) {
           // Emit code event
           yield this.createEvent('code', {
@@ -196,8 +169,90 @@ export class RLMStreamingExecutor {
             role: 'user',
             content: executionFeedback,
           });
-        } else {
-          // No code and no final answer - the model might be thinking
+        }
+
+        // Check for final answer from sandbox FIRST (handles evaluated template literals)
+        const sandboxFinalAnswer = sandbox.getVariable('__FINAL_ANSWER__');
+        const sandboxFinalVarName = sandbox.getVariable('__FINAL_VAR_NAME__');
+
+        if (sandboxFinalAnswer !== undefined) {
+          finalAnswer = this.stringify(sandboxFinalAnswer);
+          finalMethod = 'FINAL';
+          this.logger.logFinalOutput(0, finalAnswer, 'FINAL', undefined);
+
+          yield this.createEvent('final', {
+            response: finalAnswer,
+            method: finalMethod,
+          });
+
+          break;
+        }
+
+        if (sandboxFinalVarName !== undefined) {
+          const varValue = sandbox.getVariable(String(sandboxFinalVarName));
+          finalAnswer = this.stringify(varValue);
+          finalMethod = 'FINAL_VAR';
+          this.logger.logFinalOutput(0, finalAnswer ?? '', 'FINAL_VAR', String(sandboxFinalVarName));
+
+          yield this.createEvent('final', {
+            response: finalAnswer ?? '',
+            method: finalMethod,
+          });
+
+          break;
+        }
+
+        // Fallback: Check for final answer via text parsing (for non-code FINAL statements)
+        if (parsed.final) {
+          if (parsed.final.type === 'FINAL') {
+            let value = parsed.final.value;
+
+            // Resolve template literals like ${varName} from sandbox variables
+            if (value.includes('${')) {
+              value = value.replace(/\$\{(\w+)\}/g, (match, varName) => {
+                const varValue = sandbox.getVariable(varName);
+                if (varValue !== undefined) {
+                  return this.stringify(varValue);
+                }
+                return match;
+              });
+            }
+
+            // Check if value looks like a bare variable name
+            if (/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(value)) {
+              const varValue = sandbox.getVariable(value);
+              if (varValue !== undefined) {
+                finalAnswer = this.stringify(varValue);
+              } else {
+                finalAnswer = value;
+              }
+            } else {
+              finalAnswer = value;
+            }
+            finalMethod = 'FINAL';
+          } else if (parsed.final.type === 'FINAL_VAR') {
+            const varValue = sandbox.getVariable(parsed.final.value);
+            finalAnswer = this.stringify(varValue);
+            finalMethod = 'FINAL_VAR';
+          }
+
+          this.logger.logFinalOutput(
+            0,
+            finalAnswer ?? '',
+            parsed.final.type,
+            parsed.final.type === 'FINAL_VAR' ? parsed.final.value : undefined
+          );
+
+          yield this.createEvent('final', {
+            response: finalAnswer ?? '',
+            method: finalMethod,
+          });
+
+          break;
+        }
+
+        // No code and no final answer - the model might be thinking
+        if (!parsed.code) {
           messages.push({
             role: 'assistant',
             content: completion.content,
@@ -225,6 +280,7 @@ export class RLMStreamingExecutor {
 
       const result: RLMResult = {
         response: finalAnswer,
+        iterations: iteration,
         trace: this.logger.getEntries(),
         usage: {
           totalTokens: totalUsage.totalTokens,

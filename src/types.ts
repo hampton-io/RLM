@@ -10,7 +10,6 @@ export type ModelProvider = 'openai' | 'anthropic' | 'google';
 export type OpenAIModel =
   // GPT-5.2 Series (latest flagship)
   | 'gpt-5.2'
-  | 'gpt-5.2-pro'
   | 'gpt-5.2-codex'
   // GPT-5.1 Series
   | 'gpt-5.1'
@@ -59,8 +58,6 @@ export type AnthropicModel =
   | 'claude-haiku-4-5-20251001'
   | 'claude-opus-4-5-20251101'
   // Claude 4 Legacy
-  | 'claude-sonnet-4'
-  | 'claude-opus-4'
   | 'claude-opus-4-1'
   // Legacy 3.x (deprecated but still available)
   | 'claude-3-5-sonnet-latest'
@@ -73,8 +70,6 @@ export type GoogleModel =
   // Gemini 3 Series (latest)
   | 'gemini-3-pro-preview'
   | 'gemini-3-flash-preview'
-  | 'gemini-3-pro'
-  | 'gemini-3-flash'
   // Gemini 2.5 Series (production)
   | 'gemini-2.5-pro'
   | 'gemini-2.5-flash'
@@ -311,6 +306,7 @@ export interface DryRunResult {
 
 export interface RLMResult {
   response: string;
+  iterations: number;
   trace: TraceEntry[];
   usage: {
     totalTokens: number;

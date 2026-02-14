@@ -4,8 +4,62 @@ import type { ParsedLLMOutput } from '../types.js';
  * Regular expressions for parsing LLM output.
  */
 const CODE_BLOCK_REGEX = /```(?:javascript|js|typescript|ts)?\n([\s\S]*?)```/g;
-const FINAL_REGEX = /FINAL\s*\(\s*["'`]?([\s\S]*?)["'`]?\s*\)/;
-const FINAL_VAR_REGEX = /FINAL_VAR\s*\(\s*["'`]?(\w+)["'`]?\s*\)/;
+
+/**
+ * Find a balanced FINAL() or FINAL_VAR() call, handling nested parentheses.
+ * Returns the full match and the inner content.
+ */
+function findBalancedFinalCall(text: string, funcName: 'FINAL' | 'FINAL_VAR'): { match: string; content: string; index: number } | null {
+  const startRegex = new RegExp(`${funcName}\\s*\\(`);
+  const startMatch = text.match(startRegex);
+  if (!startMatch || startMatch.index === undefined) return null;
+
+  const startIndex = startMatch.index;
+  const parenStart = startIndex + startMatch[0].length - 1; // Position of opening (
+  
+  let depth = 1;
+  let i = parenStart + 1;
+  
+  while (i < text.length && depth > 0) {
+    const char = text[i];
+    if (char === '(') depth++;
+    else if (char === ')') depth--;
+    // Skip string contents
+    else if (char === '"' || char === "'" || char === '`') {
+      const quote = char;
+      i++;
+      while (i < text.length && text[i] !== quote) {
+        if (text[i] === '\\') i++; // Skip escaped chars
+        i++;
+      }
+    }
+    i++;
+  }
+
+  if (depth !== 0) return null; // Unbalanced
+
+  const fullMatch = text.slice(startIndex, i);
+  const content = text.slice(parenStart + 1, i - 1).trim();
+  
+  return { match: fullMatch, content, index: startIndex };
+}
+
+/**
+ * Check if a character index falls inside a fenced code block in the output.
+ * Finds all ```...``` ranges and returns true if targetIndex is within one.
+ */
+function isInsideCodeBlock(output: string, targetIndex: number): boolean {
+  const fenceRegex = /```(?:javascript|js|typescript|ts)?\n[\s\S]*?```/g;
+  let match;
+  while ((match = fenceRegex.exec(output)) !== null) {
+    const start = match.index;
+    const end = start + match[0].length;
+    if (targetIndex >= start && targetIndex < end) {
+      return true;
+    }
+  }
+  return false;
+}
 
 /**
  * Parse LLM output to extract code blocks and final answers.
@@ -27,28 +81,52 @@ export function parseLLMOutput(output: string): ParsedLLMOutput {
     result.code = codeBlocks.join('\n\n');
   }
 
-  // Check for FINAL() or FINAL_VAR() (can be inside or outside code blocks)
-  const finalMatch = output.match(FINAL_REGEX);
-  if (finalMatch) {
+  // Check for FINAL() or FINAL_VAR() using balanced parenthesis matching
+  // This handles cases like FINAL(String(result)) correctly
+  const finalCall = findBalancedFinalCall(output, 'FINAL');
+  if (finalCall) {
+    // Extract the value, stripping outer quotes if present
+    let value = finalCall.content;
+    const quoteMatch = value.match(/^["'`]([\s\S]*)["'`]$/);
+    if (quoteMatch) {
+      value = quoteMatch[1];
+    }
+    
     result.final = {
       type: 'FINAL',
-      value: finalMatch[1].trim(),
+      value: value.trim(),
     };
-    // Remove FINAL() from code if present
+    
+    // Only remove FINAL() from code if it's NOT inside a code block
+    // When FINAL() is inside a code block, it should be left for the sandbox to execute
     if (result.code) {
-      result.code = result.code.replace(FINAL_REGEX, '').trim();
+      if (!isInsideCodeBlock(output, finalCall.index)) {
+        result.code = result.code.replace(finalCall.match, '').trim();
+        // Clean up any trailing semicolons left alone on a line
+        result.code = result.code.replace(/^\s*;\s*$/gm, '').trim();
+      }
     }
   }
 
-  const finalVarMatch = output.match(FINAL_VAR_REGEX);
-  if (finalVarMatch && !result.final) {
+  const finalVarCall = findBalancedFinalCall(output, 'FINAL_VAR');
+  if (finalVarCall && !result.final) {
+    let value = finalVarCall.content;
+    const quoteMatch = value.match(/^["'`]?(\w+)["'`]?$/);
+    if (quoteMatch) {
+      value = quoteMatch[1];
+    }
+    
     result.final = {
       type: 'FINAL_VAR',
-      value: finalVarMatch[1].trim(),
+      value: value.trim(),
     };
-    // Remove FINAL_VAR() from code if present, but keep the rest
+    
+    // Only remove FINAL_VAR() from code if it's NOT inside a code block
     if (result.code) {
-      result.code = result.code.replace(FINAL_VAR_REGEX, '').trim();
+      if (!isInsideCodeBlock(output, finalVarCall.index)) {
+        result.code = result.code.replace(finalVarCall.match, '').trim();
+        result.code = result.code.replace(/^\s*;\s*$/gm, '').trim();
+      }
     }
   }
 
@@ -68,21 +146,32 @@ export function parseLLMOutput(output: string): ParsedLLMOutput {
  * Check if output contains a final answer.
  */
 export function hasFinalAnswer(output: string): boolean {
-  return FINAL_REGEX.test(output) || FINAL_VAR_REGEX.test(output);
+  return findBalancedFinalCall(output, 'FINAL') !== null || 
+         findBalancedFinalCall(output, 'FINAL_VAR') !== null;
 }
 
 /**
  * Extract final answer from output.
  */
 export function extractFinalAnswer(output: string): string | null {
-  const finalMatch = output.match(FINAL_REGEX);
-  if (finalMatch) {
-    return finalMatch[1].trim();
+  const finalCall = findBalancedFinalCall(output, 'FINAL');
+  if (finalCall) {
+    let value = finalCall.content;
+    const quoteMatch = value.match(/^["'`]([\s\S]*)["'`]$/);
+    if (quoteMatch) {
+      value = quoteMatch[1];
+    }
+    return value.trim();
   }
 
-  const finalVarMatch = output.match(FINAL_VAR_REGEX);
-  if (finalVarMatch) {
-    return finalVarMatch[1].trim();
+  const finalVarCall = findBalancedFinalCall(output, 'FINAL_VAR');
+  if (finalVarCall) {
+    let value = finalVarCall.content;
+    const quoteMatch = value.match(/^["'`]?(\w+)["'`]?$/);
+    if (quoteMatch) {
+      value = quoteMatch[1];
+    }
+    return value.trim();
   }
 
   return null;

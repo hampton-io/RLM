@@ -17,13 +17,13 @@ import {
 } from './utils/index.js';
 import { RLMLogger } from './logger/index.js';
 import { CostTracker, BudgetExceededError, TokenLimitExceededError } from './cost-tracker.js';
-import { metricsCollector } from './metrics/index.js';
+import { metricsCollector } from './metrics/collector.js';
 
 /**
  * Default RLM options.
  */
 const DEFAULT_OPTIONS: Required<Omit<RLMOptions, 'apiKey' | 'provider' | 'extendedThinking' | 'image' | 'maxCost' | 'maxTokens'>> & Pick<RLMOptions, 'maxCost' | 'maxTokens'> = {
-  model: 'gemini-2.0-flash',
+  model: 'gpt-5.2',
   maxIterations: 20,
   maxDepth: 1,
   sandboxTimeout: 10000,
@@ -249,6 +249,7 @@ export class RLMExecutor {
 
       return {
         response: finalAnswer,
+        iterations: iteration,
         trace: this.logger.getEntries(),
         usage: {
           totalTokens: totalUsage.totalTokens,

@@ -6,7 +6,7 @@ import { invalidConfigError } from './utils/errors.js';
  * Default configuration values.
  */
 export const DEFAULT_CONFIG = {
-  model: 'gemini-2.0-flash' as SupportedModel,
+  model: 'gpt-5.2' as SupportedModel,
   maxIterations: 20,
   maxDepth: 1,
   sandboxTimeout: 30000,

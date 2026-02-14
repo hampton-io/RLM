@@ -9,7 +9,7 @@
 
 | Rank | Model | Speed | Cost | Notes |
 |------|-------|-------|------|-------|
-| 🥇 | **gemini-2.0-flash** | 2.7s | $0.0005 | Best overall (fastest + cheapest) |
+| 🥇 | **gpt-5.2** | 1.0s | $0.0008 | Best overall (fastest, default) |
 | 🥈 | **gemini-2.0-flash-lite** | 3.7s | $0.0004 | Cheapest option |
 | 🥉 | **gemini-2.5-flash** | 3.9s | $0.0005 | Good balance |
 
@@ -26,8 +26,6 @@
 | gemini-3-flash-preview | 5.6s | 2,808 | 2 | $0.0017 | ✅ Newest |
 | gemini-2.5-pro | 7.4s | 2,485 | 1 | $0.0060 | ✅ Pro tier |
 | gemini-3-pro-preview | 9.7s | - | - | - | ⚠️ Rate limited |
-| gemini-3-flash | - | - | - | - | ❌ Not available yet |
-| gemini-3-pro | - | - | - | - | ❌ Not available yet |
 
 ### OpenAI Models
 
@@ -48,7 +46,6 @@
 | o3 | - | - | - | - | ✅ Fixed |
 | gpt-5.1-codex | - | - | - | - | ⚠️ Completions API only |
 | gpt-5.2-codex | - | - | - | - | ⚠️ Completions API only |
-| gpt-5.2-pro | - | - | - | - | ⚠️ Completions API only |
 
 **Note:** "codex" and "pro" variants use OpenAI's Completions API, not Chat. They're optimized for code completion, not conversation.
 
@@ -131,7 +128,7 @@ Direct output, no hidden reasoning, faster and cheaper.
 These models use OpenAI's legacy Completions API for code completion:
 
 - gpt-5.1-codex, gpt-5.1-codex-mini
-- gpt-5.2-codex, gpt-5.2-pro
+- gpt-5.2-codex
 
 **RLM only supports Chat API models.** Use these codex models via OpenAI's Completions endpoint directly.
 
@@ -161,7 +158,6 @@ function isReasoningModel(model: string): boolean {
 
 | Issue | Models Affected | Status |
 |-------|-----------------|--------|
-| Model not available | gemini-3-flash, gemini-3-pro | Preview only (use -preview suffix) |
 | Rate limiting | gemini-3-pro-preview | Add retry logic |
 
 ## Recommendations
@@ -181,11 +177,11 @@ function isReasoningModel(model: string): boolean {
 
 ### Default Model
 
-**gemini-2.0-flash** is the recommended default:
-- Fastest (2.7s)
-- Cheapest ($0.0005)
+**gpt-5.2** is the recommended default:
+- Fastest overall (1.0s)
 - Reliable (consistent results)
 - Good quality for most tasks
+- Strong protocol compliance (9/9 tests)
 
 ## Model Pricing Reference (February 2026)
 
