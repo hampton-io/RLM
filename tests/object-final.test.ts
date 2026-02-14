@@ -6,9 +6,14 @@ import { RLMExecutor } from '../src/executor.js';
  * 
  * When models concatenate objects with strings, JavaScript produces [object Object].
  * These tests verify that RLM handles this correctly.
+ * 
+ * These are integration tests that require OPENAI_API_KEY.
+ * They are skipped in CI environments without the API key.
  */
 
-describe('[object Object] Bug Prevention', () => {
+const hasApiKey = !!process.env.OPENAI_API_KEY;
+
+describe.skipIf(!hasApiKey)('[object Object] Bug Prevention', () => {
   const executor = new RLMExecutor({
     model: 'gpt-5.2',
     maxIterations: 10,
