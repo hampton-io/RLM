@@ -65,7 +65,6 @@ echo "|----------|-------|------|--------|-------|------|--------|-------|" >> "
 declare -a MODELS=(
   # OpenAI - GPT-5.2 series (latest)
   "gpt-5.2"
-  "gpt-5.2-pro"
   "gpt-5.2-codex"
   # OpenAI - GPT-5.1 series
   "gpt-5.1"
@@ -93,9 +92,7 @@ declare -a MODELS=(
   "claude-haiku-4-5"
   "claude-sonnet-4-5"
   "claude-opus-4-5"
-  # Google - Gemini 3 (latest)
-  "gemini-3-flash"
-  "gemini-3-pro"
+  # Google - Gemini 3 (preview)
   "gemini-3-flash-preview"
   "gemini-3-pro-preview"
   # Google - Gemini 2.5

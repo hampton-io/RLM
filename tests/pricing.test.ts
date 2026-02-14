@@ -21,10 +21,10 @@ describe('Model Pricing', () => {
       'claude-sonnet-4-5', 'claude-haiku-4-5', 'claude-opus-4-5',
       'claude-sonnet-4-5-20250929', 'claude-haiku-4-5-20251001', 'claude-opus-4-5-20251101',
       // Anthropic - Claude 4
-      'claude-sonnet-4', 'claude-opus-4', 'claude-opus-4-1',
+      'claude-opus-4-1',
       // Anthropic - Claude 3.x
       'claude-3-5-sonnet-latest', 'claude-3-5-haiku-latest', 'claude-3-opus-latest', 'claude-3-haiku-20240307',
-      // Google - Gemini 3
+      // Google - Gemini 3 (preview)
       'gemini-3-pro-preview', 'gemini-3-flash-preview',
       // Google - Gemini 2.5
       'gemini-2.5-pro', 'gemini-2.5-flash', 'gemini-2.5-flash-lite',
@@ -38,9 +38,9 @@ describe('Model Pricing', () => {
       }
     });
 
-    it('should have at least 35 models defined', () => {
+    it('should have at least 30 models defined', () => {
       const modelCount = Object.keys(MODEL_PRICING).length;
-      expect(modelCount).toBeGreaterThanOrEqual(35);
+      expect(modelCount).toBeGreaterThanOrEqual(30);
     });
 
     it('should have all required pricing fields', () => {
@@ -261,7 +261,7 @@ describe('Model Pricing', () => {
       const anthropicModels = [
         'claude-sonnet-4-5', 'claude-haiku-4-5', 'claude-opus-4-5',
         'claude-sonnet-4-5-20250929', 'claude-haiku-4-5-20251001', 'claude-opus-4-5-20251101',
-        'claude-sonnet-4', 'claude-opus-4', 'claude-opus-4-1',
+        'claude-opus-4-1',
         'claude-3-5-sonnet-latest', 'claude-3-5-haiku-latest', 'claude-3-opus-latest',
       ];
 

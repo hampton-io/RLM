@@ -376,7 +376,7 @@ FINAL_VAR("result")
 
 ### 7.3 Update Anthropic Models
 - [x] Add Claude 4.5 series (claude-sonnet-4-5, claude-haiku-4-5, claude-opus-4-5)
-- [x] Add Claude 4 legacy models (claude-sonnet-4, claude-opus-4, claude-opus-4-1)
+- [x] Add Claude 4 legacy models (claude-opus-4-1)
 - [x] Update pricing for all Claude models
 - [x] Deprecate old Claude 3.x models
 

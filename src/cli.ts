@@ -128,7 +128,7 @@ Options:
   -c, --context <text>      Inline context string
   -f, --file <path>         Path to context file
   --stdin                   Read context from stdin
-  -m, --model <model>       Model to use (default: gemini-2.0-flash)
+  -m, --model <model>       Model to use (default: gpt-5.2)
   -v, --verbose             Enable verbose output
   -s, --stream              Stream output events
   --max-iterations <n>      Maximum iterations (default: 20)
@@ -292,7 +292,7 @@ async function main(): Promise<void> {
   }
 
   // Get model
-  const model = options.model ?? 'gemini-2.0-flash';
+  const model = options.model ?? 'gpt-5.2';
 
   // Handle dry run mode (no API call required)
   if (options.dryRun) {

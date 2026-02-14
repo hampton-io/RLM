@@ -84,4 +84,4 @@ All implement the `LLMClient` interface (`completion`, `streamCompletion`, `coun
 
 ## Environment
 
-Requires Node >= 20. Needs at least one API key: `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, or `GOOGLE_API_KEY`/`GEMINI_API_KEY`. Default model: `gemini-2.0-flash`.
+Requires Node >= 20. Needs at least one API key: `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, or `GOOGLE_API_KEY`/`GEMINI_API_KEY`. Default model: `gpt-5.2`.

@@ -78,7 +78,6 @@ export const MODEL_PRICING: Record<string, ModelPricing> = {
 
   // GPT-5.2 Series (latest flagship)
   'gpt-5.2': { inputPer1M: 5, outputPer1M: 15 },
-  'gpt-5.2-pro': { inputPer1M: 10, outputPer1M: 40 },
   'gpt-5.2-codex': { inputPer1M: 2, outputPer1M: 8 },
   
   // GPT-5.1 Series
@@ -138,8 +137,6 @@ export const MODEL_PRICING: Record<string, ModelPricing> = {
   'claude-opus-4-5-20251101': { inputPer1M: 5, outputPer1M: 25 },
 
   // Claude 4 Series (legacy)
-  'claude-sonnet-4': { inputPer1M: 3, outputPer1M: 15 },
-  'claude-opus-4': { inputPer1M: 15, outputPer1M: 75 },
   'claude-opus-4-1': { inputPer1M: 15, outputPer1M: 75 },
 
   // Claude 3.x (deprecated)
@@ -155,8 +152,6 @@ export const MODEL_PRICING: Record<string, ModelPricing> = {
   // Gemini 3 Series (latest)
   'gemini-3-pro-preview': { inputPer1M: 3.5, outputPer1M: 14 },
   'gemini-3-flash-preview': { inputPer1M: 0.5, outputPer1M: 2 },
-  'gemini-3-pro': { inputPer1M: 3.5, outputPer1M: 14 },
-  'gemini-3-flash': { inputPer1M: 0.5, outputPer1M: 2 },
 
   // Gemini 2.5 Series (production)
   'gemini-2.5-pro': { inputPer1M: 1.25, outputPer1M: 10 },

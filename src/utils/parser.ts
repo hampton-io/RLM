@@ -4,9 +4,6 @@ import type { ParsedLLMOutput } from '../types.js';
  * Regular expressions for parsing LLM output.
  */
 const CODE_BLOCK_REGEX = /```(?:javascript|js|typescript|ts)?\n([\s\S]*?)```/g;
-// Simple regex for quoted string arguments only (avoids nested paren issues)
-const FINAL_SIMPLE_REGEX = /FINAL\s*\(\s*["'`]([^"'`]*)["'`]\s*\)/;
-const FINAL_VAR_REGEX = /FINAL_VAR\s*\(\s*["'`]?(\w+)["'`]?\s*\)/;
 
 /**
  * Find a balanced FINAL() or FINAL_VAR() call, handling nested parentheses.
@@ -48,6 +45,23 @@ function findBalancedFinalCall(text: string, funcName: 'FINAL' | 'FINAL_VAR'): {
 }
 
 /**
+ * Check if a character index falls inside a fenced code block in the output.
+ * Finds all ```...``` ranges and returns true if targetIndex is within one.
+ */
+function isInsideCodeBlock(output: string, targetIndex: number): boolean {
+  const fenceRegex = /```(?:javascript|js|typescript|ts)?\n[\s\S]*?```/g;
+  let match;
+  while ((match = fenceRegex.exec(output)) !== null) {
+    const start = match.index;
+    const end = start + match[0].length;
+    if (targetIndex >= start && targetIndex < end) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/**
  * Parse LLM output to extract code blocks and final answers.
  */
 export function parseLLMOutput(output: string): ParsedLLMOutput {
@@ -86,10 +100,7 @@ export function parseLLMOutput(output: string): ParsedLLMOutput {
     // Only remove FINAL() from code if it's NOT inside a code block
     // When FINAL() is inside a code block, it should be left for the sandbox to execute
     if (result.code) {
-      // Check if the FINAL() call is inside a code block by seeing if it appears in the raw code
-      // If it does, leave it in for execution; if not, remove it
-      const isInCodeBlock = output.includes('```') && output.includes(finalCall.match);
-      if (!isInCodeBlock) {
+      if (!isInsideCodeBlock(output, finalCall.index)) {
         result.code = result.code.replace(finalCall.match, '').trim();
         // Clean up any trailing semicolons left alone on a line
         result.code = result.code.replace(/^\s*;\s*$/gm, '').trim();
@@ -112,8 +123,7 @@ export function parseLLMOutput(output: string): ParsedLLMOutput {
     
     // Only remove FINAL_VAR() from code if it's NOT inside a code block
     if (result.code) {
-      const isInCodeBlock = output.includes('```') && output.includes(finalVarCall.match);
-      if (!isInCodeBlock) {
+      if (!isInsideCodeBlock(output, finalVarCall.index)) {
         result.code = result.code.replace(finalVarCall.match, '').trim();
         result.code = result.code.replace(/^\s*;\s*$/gm, '').trim();
       }

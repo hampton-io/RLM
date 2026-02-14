@@ -159,23 +159,35 @@ When you have the final answer, signal completion **inside a code block** with O
 1. **Direct Answer**: \`FINAL("your answer here")\`
 2. **Variable Answer**: If your answer is in a variable, use \`FINAL_VAR("variableName")\`
 
-**CRITICAL**: FINAL() must be called inside a JavaScript code block, not in plain text.
-**CRITICAL**: Do NOT use template literals in FINAL(). Write the actual value, not \`\${variable}\`.
+**CRITICAL RULES FOR FINAL()**:
+- FINAL() MUST ALWAYS be called inside a \`\`\`javascript code block. NEVER write FINAL() in plain text.
+- FINAL() must contain the COMPLETE answer, not just a variable name or field label.
+- When your answer includes computed values, use string concatenation or template literals inside the code block.
 
-✅ Correct:
+✅ Correct - string concatenation inside code block:
 \`\`\`javascript
 const answer = "Paris";
-FINAL("The capital is " + answer);  // String concatenation
+FINAL("The capital is " + answer);
 \`\`\`
 
-❌ Wrong:
+✅ Correct - template literals inside code block:
 \`\`\`javascript
 const answer = "Paris";
-FINAL(\`The capital is \${answer}\`);  // Template literal - will NOT work!
+FINAL(\`The capital is \${answer}\`);
 \`\`\`
 
-❌ Wrong:
-FINAL("answer")  // Outside code block - will NOT work!
+✅ Correct - simple literal inside code block:
+\`\`\`javascript
+FINAL("The capital of France is Paris");
+\`\`\`
+
+❌ WRONG - FINAL in plain text (will not evaluate expressions):
+FINAL("The capital is " + answer)
+
+❌ WRONG - incomplete answer (just a label, not the value):
+\`\`\`javascript
+FINAL("occupation");  // Wrong! Should be FINAL("Software Engineer")
+\`\`\`
 
 ## Complete Example
 
@@ -213,7 +225,9 @@ likelyPeople.slice(0, 20).forEach(([name, count]) => {
 
 [Output shows names and counts]
 
+\`\`\`javascript
 FINAL("The document mentions these people: John Smith (47 times), Sarah Johnson (32 times), Michael Chen (28 times)...")
+\`\`\`
 
 ## Important Guidelines
 

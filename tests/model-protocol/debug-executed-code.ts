@@ -37,7 +37,7 @@ async function main() {
   const result = await executor.execute('What is 2+2?', '');
   
   console.log('\n--- FINAL RESULT ---');
-  console.log('Answer:', JSON.stringify(result.answer));
+  console.log('Answer:', JSON.stringify(result.response));
   console.log('Executed code was:', executedCode);
 }
 
