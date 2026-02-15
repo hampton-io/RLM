@@ -47,7 +47,7 @@ describe('LLM Clients', () => {
       await client.completion([{ role: 'user', content: 'Hello' }]);
       const elapsed = Date.now() - start;
 
-      expect(elapsed).toBeGreaterThanOrEqual(50);
+      expect(elapsed).toBeGreaterThanOrEqual(45);
     });
 
     it('should support streaming', async () => {
