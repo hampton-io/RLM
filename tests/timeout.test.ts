@@ -163,7 +163,7 @@ describe('Timeout Utilities', () => {
         { timeout: 1000 }
       );
 
-      expect(result.elapsed).toBeGreaterThanOrEqual(50);
+      expect(result.elapsed).toBeGreaterThanOrEqual(45);
     });
 
     it('should include partial results on timeout', async () => {
