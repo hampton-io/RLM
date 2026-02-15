@@ -26,7 +26,7 @@ for (let i = 0; i < args.length; i++) {
 
 // Configure metrics with file persistence
 const storagePath = process.env.RLM_METRICS_FILE || `${process.env.HOME}/.rlm/metrics.json`;
-metricsCollector.configure({
+await metricsCollector.configure({
   enabled: true,
   apiKey: process.env.RLM_METRICS_API_KEY,
   redactQueries: process.env.RLM_REDACT_QUERIES === 'true',

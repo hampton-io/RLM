@@ -15,6 +15,8 @@ const ERROR_SUGGESTIONS: Record<RLMErrorCode, string> = {
     'Your query requires too many nested sub-queries. Try simplifying the task or increasing maxDepth.',
   PARSE_ERROR: 'The LLM response was malformed. Try rephrasing your query.',
   INVALID_CONFIG: 'Check your configuration options for typos or invalid values.',
+  METRICS_STORE_ERROR:
+    'The metrics storage backend encountered an error. Check the store connection and configuration.',
 };
 
 /**
@@ -155,6 +157,16 @@ export function invalidConfigError(message: string): RLMError {
   error.suggestion =
     'Review your RLM configuration options. Common issues: ' +
     'missing API key, invalid model name, negative numeric values, or temperature outside 0-2 range.';
+  return error;
+}
+
+/**
+ * Create a metrics store error.
+ */
+export function metricsStoreError(message: string, cause?: Error): RLMError {
+  const fullMessage = `Metrics store error: ${message}`;
+  const error = new RLMError(fullMessage, 'METRICS_STORE_ERROR', cause);
+  error.suggestion = ERROR_SUGGESTIONS.METRICS_STORE_ERROR;
   return error;
 }
 

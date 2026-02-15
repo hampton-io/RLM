@@ -553,4 +553,5 @@ export type RLMErrorCode =
   | 'MAX_ITERATIONS'
   | 'MAX_DEPTH'
   | 'PARSE_ERROR'
-  | 'INVALID_CONFIG';
+  | 'INVALID_CONFIG'
+  | 'METRICS_STORE_ERROR';

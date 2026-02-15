@@ -1,17 +1,18 @@
-/**
- * RLM Metrics Collector
- * Collects and stores query metrics for observability
- * Supports file-based persistence for sharing between processes
- */
-
-import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'node:fs';
-import { dirname } from 'node:path';
+import type {
+  MetricsStore,
+  MetricsFilter,
+  MetricsStoreStats,
+  RetentionPolicy,
+  StoreHealthResult,
+} from './types.js';
+import { createMetricsStore } from './stores/index.js';
+import type { MetricsStoreConfig } from './stores/index.js';
 
 export interface QueryMetric {
   id: string;
   timestamp: Date;
   query: string;
-  queryHash?: string; // SHA256 if redacted
+  queryHash?: string;
   contextBytes: number;
   model: string;
   iterations: number;
@@ -23,33 +24,37 @@ export interface QueryMetric {
   error?: string;
   userId?: string;
   metadata?: Record<string, unknown>;
+  tags?: string[];
+  instanceId?: string;
 }
 
 export interface MetricsConfig {
   enabled: boolean;
   redactQueries?: boolean;
-  maxHistory?: number; // Max queries to keep in memory
+  maxHistory?: number;
   apiKey?: string;
-  storagePath?: string; // Path to JSON file for persistence
-}
-
-interface StoredMetric extends Omit<QueryMetric, 'timestamp'> {
-  timestamp: string; // ISO string for JSON serialization
+  storagePath?: string;
+  store?: MetricsStore;
 }
 
 class MetricsCollector {
-  private queries: QueryMetric[] = [];
+  private store: MetricsStore | null = null;
   private config: MetricsConfig = { enabled: false };
   private startTime: Date = new Date();
-  private loaded = false;
-
-  configure(config: MetricsConfig): void {
+  async configure(config: MetricsConfig): Promise<void> {
     this.config = config;
 
-    // Load existing metrics from file if configured
-    if (config.storagePath && !this.loaded) {
-      this.loadFromFile();
-      this.loaded = true;
+    if (this.store) {
+      await this.store.disconnect();
+      this.store = null;
+    }
+
+    if (config.enabled) {
+      const storeConfig: MetricsStoreConfig = {
+        store: config.store,
+        storagePath: config.storagePath,
+      };
+      this.store = await createMetricsStore(storeConfig);
     }
   }
 
@@ -61,14 +66,9 @@ class MetricsCollector {
     return this.config.apiKey;
   }
 
-  record(metric: Omit<QueryMetric, 'id' | 'timestamp'>): QueryMetric {
-    if (!this.config.enabled) {
+  async record(metric: Omit<QueryMetric, 'id' | 'timestamp'>): Promise<QueryMetric> {
+    if (!this.config.enabled || !this.store) {
       return { ...metric, id: '', timestamp: new Date() };
-    }
-
-    // Reload from file to get latest (in case another process wrote)
-    if (this.config.storagePath) {
-      this.loadFromFile();
     }
 
     const fullMetric: QueryMetric = {
@@ -77,81 +77,49 @@ class MetricsCollector {
       timestamp: new Date(),
     };
 
-    // Optionally redact query text
     if (this.config.redactQueries) {
       fullMetric.queryHash = this.hashQuery(fullMetric.query);
       fullMetric.query = '[REDACTED]';
     }
 
-    this.queries.unshift(fullMetric);
+    await this.store.record(fullMetric);
 
     // Trim history if needed
     const maxHistory = this.config.maxHistory || 10000;
-    if (this.queries.length > maxHistory) {
-      this.queries = this.queries.slice(0, maxHistory);
-    }
-
-    // Save to file if configured
-    if (this.config.storagePath) {
-      this.saveToFile();
-    }
+    await this.store.prune({ maxQueries: maxHistory });
 
     return fullMetric;
   }
 
-  getQueries(options?: {
+  async getQueries(options?: {
     limit?: number;
     offset?: number;
     since?: Date;
     model?: string;
     success?: boolean;
-  }): { queries: QueryMetric[]; total: number } {
-    // Reload from file to get latest
-    if (this.config.storagePath) {
-      this.loadFromFile();
+  }): Promise<{ queries: QueryMetric[]; total: number }> {
+    if (!this.store) {
+      return { queries: [], total: 0 };
     }
 
-    let filtered = [...this.queries];
-
-    if (options?.since) {
-      filtered = filtered.filter((q) => q.timestamp >= options.since!);
-    }
-    if (options?.model) {
-      filtered = filtered.filter((q) => q.model === options.model);
-    }
-    if (options?.success !== undefined) {
-      filtered = filtered.filter((q) => q.success === options.success);
-    }
-
-    const total = filtered.length;
-    const offset = options?.offset || 0;
-    const limit = options?.limit || 100;
-
-    return {
-      queries: filtered.slice(offset, offset + limit),
-      total,
+    const filter: MetricsFilter = {
+      limit: options?.limit,
+      offset: options?.offset,
+      since: options?.since,
+      model: options?.model,
+      success: options?.success,
     };
+
+    const result = await this.store.query(filter);
+    return { queries: result.metrics, total: result.total };
   }
 
-  getQuery(id: string): QueryMetric | undefined {
-    if (this.config.storagePath) {
-      this.loadFromFile();
-    }
-    return this.queries.find((q) => q.id === id);
+  async getQuery(id: string): Promise<QueryMetric | undefined> {
+    if (!this.store) return undefined;
+    return this.store.getById(id);
   }
 
-  getStats(period: 'hour' | 'day' | 'week' | 'month' = 'day'): {
-    queries: number;
-    cost: number;
-    avgDuration: number;
-    errorRate: number;
-    byModel: Record<string, { queries: number; cost: number }>;
-  } {
-    if (this.config.storagePath) {
-      this.loadFromFile();
-    }
-
-    const now = new Date();
+  async getStats(period: 'hour' | 'day' | 'week' | 'month' = 'day'): Promise<MetricsStoreStats> {
     const periodMs = {
       hour: 60 * 60 * 1000,
       day: 24 * 60 * 60 * 1000,
@@ -159,100 +127,69 @@ class MetricsCollector {
       month: 30 * 24 * 60 * 60 * 1000,
     }[period];
 
-    const cutoff = new Date(now.getTime() - periodMs);
-    const periodQueries = this.queries.filter((q) => q.timestamp >= cutoff);
-
-    const totalCost = periodQueries.reduce((sum, q) => sum + q.cost, 0);
-    const totalDuration = periodQueries.reduce((sum, q) => sum + q.durationMs, 0);
-    const errors = periodQueries.filter((q) => !q.success).length;
-
-    const byModel: Record<string, { queries: number; cost: number }> = {};
-    for (const q of periodQueries) {
-      if (!byModel[q.model]) {
-        byModel[q.model] = { queries: 0, cost: 0 };
-      }
-      byModel[q.model].queries++;
-      byModel[q.model].cost += q.cost;
+    if (!this.store) {
+      return { queries: 0, cost: 0, avgDuration: 0, errorRate: 0, byModel: {} };
     }
 
-    return {
-      queries: periodQueries.length,
-      cost: totalCost,
-      avgDuration: periodQueries.length > 0 ? totalDuration / periodQueries.length : 0,
-      errorRate: periodQueries.length > 0 ? errors / periodQueries.length : 0,
-      byModel,
-    };
+    return this.store.getStats(periodMs);
   }
 
-  getHealth(): {
+  async getHealth(): Promise<{
     status: 'healthy' | 'degraded' | 'unhealthy';
     uptime: number;
     activeQueries: number;
     lastQuery?: Date;
     totalQueries: number;
-  } {
-    if (this.config.storagePath) {
-      this.loadFromFile();
-    }
-
-    const stats = this.getStats('hour');
+    store?: StoreHealthResult;
+  }> {
+    const stats = await this.getStats('hour');
     const uptime = Date.now() - this.startTime.getTime();
 
     let status: 'healthy' | 'degraded' | 'unhealthy' = 'healthy';
     if (stats.errorRate > 0.1) status = 'degraded';
     if (stats.errorRate > 0.5) status = 'unhealthy';
 
+    let storeHealth: StoreHealthResult | undefined;
+    let totalQueries = 0;
+    let lastQuery: Date | undefined;
+
+    if (this.store) {
+      storeHealth = await this.store.healthCheck();
+      const allMetrics = await this.store.query({ limit: 1 });
+      totalQueries = allMetrics.total;
+      if (allMetrics.metrics.length > 0) {
+        lastQuery = allMetrics.metrics[0].timestamp;
+      }
+    }
+
     return {
       status,
       uptime,
       activeQueries: 0,
-      lastQuery: this.queries[0]?.timestamp,
-      totalQueries: this.queries.length,
+      lastQuery,
+      totalQueries,
+      store: storeHealth,
     };
   }
 
-  clear(): void {
-    this.queries = [];
-    if (this.config.storagePath) {
-      this.saveToFile();
+  async clear(): Promise<void> {
+    if (this.store) {
+      await this.store.clear();
     }
   }
 
-  private loadFromFile(): void {
-    if (!this.config.storagePath) return;
-
-    try {
-      if (existsSync(this.config.storagePath)) {
-        const data = readFileSync(this.config.storagePath, 'utf8');
-        const stored: StoredMetric[] = JSON.parse(data);
-        this.queries = stored.map((m) => ({
-          ...m,
-          timestamp: new Date(m.timestamp),
-        }));
-      }
-    } catch (error) {
-      console.error('Failed to load metrics from file:', error);
-    }
+  async prune(policy: RetentionPolicy): Promise<number> {
+    if (!this.store) return 0;
+    return this.store.prune(policy);
   }
 
-  private saveToFile(): void {
-    if (!this.config.storagePath) return;
+  async export(): Promise<QueryMetric[]> {
+    if (!this.store) return [];
+    return this.store.export();
+  }
 
-    try {
-      // Ensure directory exists
-      const dir = dirname(this.config.storagePath);
-      if (!existsSync(dir)) {
-        mkdirSync(dir, { recursive: true });
-      }
-
-      const stored: StoredMetric[] = this.queries.map((m) => ({
-        ...m,
-        timestamp: m.timestamp.toISOString(),
-      }));
-      writeFileSync(this.config.storagePath, JSON.stringify(stored, null, 2));
-    } catch (error) {
-      console.error('Failed to save metrics to file:', error);
-    }
+  getStore(): MetricsStore | null {
+    return this.store;
   }
 
   private generateId(): string {

@@ -246,17 +246,21 @@ export class RLMExecutor {
       const executionTime = Date.now() - startTime;
 
       // Record metrics
-      metricsCollector.record({
-        query,
-        contextBytes: context.length,
-        model: this.options.model,
-        iterations: iteration,
-        tokensIn: totalUsage.promptTokens,
-        tokensOut: totalUsage.completionTokens,
-        cost: totalCost,
-        durationMs: executionTime,
-        success: true,
-      });
+      try {
+        await metricsCollector.record({
+          query,
+          contextBytes: context.length,
+          model: this.options.model,
+          iterations: iteration,
+          tokensIn: totalUsage.promptTokens,
+          tokensOut: totalUsage.completionTokens,
+          cost: totalCost,
+          durationMs: executionTime,
+          success: true,
+        });
+      } catch {
+        // Metrics failure should not mask execution results
+      }
 
       return {
         response: finalAnswer,
@@ -274,18 +278,22 @@ export class RLMExecutor {
       const totalUsage = this.logger.getTotalUsage();
       const totalCost = calculateCost(this.options.model, totalUsage);
 
-      metricsCollector.record({
-        query,
-        contextBytes: context.length,
-        model: this.options.model,
-        iterations: 0,
-        tokensIn: totalUsage.promptTokens,
-        tokensOut: totalUsage.completionTokens,
-        cost: totalCost,
-        durationMs: Date.now() - startTime,
-        success: false,
-        error: error instanceof Error ? error.message : String(error),
-      });
+      try {
+        await metricsCollector.record({
+          query,
+          contextBytes: context.length,
+          model: this.options.model,
+          iterations: 0,
+          tokensIn: totalUsage.promptTokens,
+          tokensOut: totalUsage.completionTokens,
+          cost: totalCost,
+          durationMs: Date.now() - startTime,
+          success: false,
+          error: error instanceof Error ? error.message : String(error),
+        });
+      } catch {
+        // Metrics failure should not mask execution errors
+      }
 
       throw error;
     } finally {

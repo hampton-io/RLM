@@ -440,3 +440,22 @@ export type {
   LoadSessionOptions,
   SessionListEntry,
 } from './session.js';
+
+// Metrics exports
+export {
+  metricsCollector,
+  metricsRouter,
+  InMemoryStore,
+  JsonFileStore,
+  createMetricsStore,
+} from './metrics/index.js';
+export type {
+  QueryMetric,
+  MetricsConfig,
+  MetricsStore,
+  MetricsFilter,
+  RetentionPolicy,
+  StoreHealthResult,
+  MetricsStoreStats,
+  MetricsStoreConfig,
+} from './metrics/index.js';
