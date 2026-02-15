@@ -11,22 +11,33 @@ Tests use "War and Peace" by Leo Tolstoy (public domain) as a large text corpus 
 Download the dataset from Project Gutenberg:
 
 ```bash
-cd tests/model-protocol/
-curl -s "https://www.gutenberg.org/cache/epub/2600/pg2600.txt" -o war-and-peace.txt
+curl -o tests/model-protocol/war-and-peace.txt https://www.gutenberg.org/cache/epub/2600/pg2600.txt
+```
+
+If gutenberg.org is down, use the PGLAF mirror:
+
+```bash
+curl -L -o tests/model-protocol/war-and-peace.txt https://gutenberg.pglaf.org/2/6/0/2600/2600-0.txt
 ```
 
 The file should be ~3.3MB and contain the full text of War and Peace.
 
 ## Running Tests
 
-Run all protocol tests:
+Tests require at least one API key (`OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, or `GOOGLE_API_KEY`). If you have a `.env` file, export the variables first:
+
 ```bash
-npm test tests/model-protocol/model-protocol.test.ts
+export $(grep -v '^#' .env | xargs)
 ```
 
-Test specific model:
+Run all protocol tests:
 ```bash
-MODEL=gpt-5.2 npm test tests/model-protocol/model-protocol.test.ts
+MODEL=gpt-5.2 npx vitest run tests/model-protocol/model-protocol.test.ts
+```
+
+Test with a specific model:
+```bash
+MODEL=claude-3-5-sonnet-latest npx vitest run tests/model-protocol/model-protocol.test.ts
 ```
 
 ## Test Categories
