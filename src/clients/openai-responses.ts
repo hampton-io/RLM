@@ -468,7 +468,8 @@ export class OpenAIResponsesClient {
   /**
    * Parse API response into our format.
    */
-  private parseResponse(response: Record<string, unknown>): ResponsesResult {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private parseResponse(response: any): ResponsesResult {
     const output: OutputItem[] = [];
     const citations: Citation[] = [];
     let outputText = '';
@@ -551,7 +552,8 @@ export class OpenAIResponsesClient {
   /**
    * Parse annotation objects into citations.
    */
-  private parseAnnotations(annotations: Record<string, unknown>[] | undefined): Citation[] {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private parseAnnotations(annotations: any[] | undefined): Citation[] {
     if (!annotations || !Array.isArray(annotations)) {
       return [];
     }
