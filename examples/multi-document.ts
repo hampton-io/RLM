@@ -247,7 +247,7 @@ async function main() {
 
   // Create RLM instance
   const rlm = new RLM({
-    model: 'gpt-4o-mini',
+    model: 'gpt-5.2',
     verbose: false,
     maxIterations: 20,
     maxDepth: 2,

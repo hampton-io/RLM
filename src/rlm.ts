@@ -226,7 +226,7 @@ export class RLM {
         provider,
         maxIterations,
         maxDepth: options.maxDepth ?? 1,
-        sandboxTimeout: options.sandboxTimeout ?? 10000,
+        sandboxTimeout: options.sandboxTimeout ?? 30000,
         temperature: options.temperature ?? 0,
       },
       context: {

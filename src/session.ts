@@ -269,7 +269,7 @@ export function createSession(
       provider: config.provider,
       maxIterations: config.maxIterations ?? 20,
       maxDepth: config.maxDepth ?? 1,
-      sandboxTimeout: config.sandboxTimeout ?? 10000,
+      sandboxTimeout: config.sandboxTimeout ?? 30000,
       temperature: config.temperature ?? 0,
       extendedThinking: config.extendedThinking,
     },

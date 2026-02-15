@@ -25,7 +25,7 @@ const DEFAULT_OPTIONS: Required<
   model: 'gpt-5.2',
   maxIterations: 20,
   maxDepth: 1,
-  sandboxTimeout: 10000,
+  sandboxTimeout: 30000,
   verbose: false,
   temperature: 0,
   maxCost: undefined,

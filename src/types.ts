@@ -247,7 +247,7 @@ export interface RLMOptions {
   provider?: ModelProvider; // Auto-detected from model if not specified
   maxIterations?: number; // Max REPL iterations (default: 20)
   maxDepth?: number; // Max recursion depth (default: 1)
-  sandboxTimeout?: number; // Sandbox execution timeout (default: 10000)
+  sandboxTimeout?: number; // Sandbox execution timeout (default: 30000)
   verbose?: boolean; // Log execution details (default: false)
   temperature?: number; // LLM temperature (default: 0)
   apiKey?: string; // Override env var API key
