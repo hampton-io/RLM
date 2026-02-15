@@ -1,17 +1,25 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeAll } from 'vitest';
 import { RLMExecutor } from '../src/executor.js';
 
 /**
  * Tests for [object Object] bug prevention
- * 
+ *
  * When models concatenate objects with strings, JavaScript produces [object Object].
  * These tests verify that RLM handles this correctly.
+ *
+ * Requires OPENAI_API_KEY — skipped in CI without keys.
  */
 
-describe('[object Object] Bug Prevention', () => {
-  const executor = new RLMExecutor({
-    model: 'gpt-5.2',
-    maxIterations: 10,
+const HAS_OPENAI_KEY = !!process.env.OPENAI_API_KEY;
+
+describe.skipIf(!HAS_OPENAI_KEY)('[object Object] Bug Prevention', () => {
+  let executor: RLMExecutor;
+
+  beforeAll(() => {
+    executor = new RLMExecutor({
+      model: 'gpt-5.2',
+      maxIterations: 10,
+    });
   });
 
   it('should handle object concatenation without producing [object Object]', async () => {
