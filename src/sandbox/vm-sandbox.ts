@@ -15,7 +15,9 @@ const DEFAULT_OPTIONS: Required<SandboxOptions> = {
 interface PendingQuery {
   id: number;
   type: 'single' | 'parallel';
-  data: { prompt: string; subContext?: string } | { queries: Array<{ prompt: string; context?: string }> };
+  data:
+    | { prompt: string; subContext?: string }
+    | { queries: Array<{ prompt: string; context?: string }> };
   resolve: (value: unknown) => void;
   reject: (error: Error) => void;
 }
@@ -137,9 +139,10 @@ export class VMSandbox implements SandboxEnvironment {
       },
 
       grep: (text: string, pattern: string | RegExp): string[] => {
-        const regex = typeof pattern === 'string'
-          ? new RegExp(pattern, 'm')
-          : new RegExp(pattern.source, pattern.flags.replace(/[gy]/g, ''));
+        const regex =
+          typeof pattern === 'string'
+            ? new RegExp(pattern, 'm')
+            : new RegExp(pattern.source, pattern.flags.replace(/[gy]/g, ''));
         const lines = text.split('\n');
         return lines.filter((line) => {
           regex.lastIndex = 0;
@@ -200,7 +203,7 @@ export class VMSandbox implements SandboxEnvironment {
       str: (value: unknown) => {
         return this.stringify(value);
       },
-      
+
       // Helper: JSON.stringify shorthand
       json: (value: unknown) => {
         return JSON.stringify(value, null, 2);
@@ -209,16 +212,18 @@ export class VMSandbox implements SandboxEnvironment {
       // FINAL functions - capture evaluated values (not raw text)
       // This allows template literals like FINAL(`Answer: ${myVar}`) to work
       FINAL: (value: unknown) => {
-        let stringValue = typeof value === 'string' ? value : this.stringify(value);
-        
+        const stringValue = typeof value === 'string' ? value : this.stringify(value);
+
         // Detect and fix [object Object] corruption
         // This happens when code does: "text " + someObject
         if (stringValue.includes('[object Object]')) {
           // Log warning but try to salvage by removing the corruption markers
-          console.warn('[RLM] Warning: FINAL value contains [object Object] - object was concatenated as string');
+          console.warn(
+            '[RLM] Warning: FINAL value contains [object Object] - object was concatenated as string'
+          );
           // Don't modify the value - let validation catch it
         }
-        
+
         this.variables['__FINAL_ANSWER__'] = stringValue;
         return stringValue;
       },
@@ -240,7 +245,7 @@ export class VMSandbox implements SandboxEnvironment {
         wasm: false,
       },
     });
-    
+
     // Patch Object.prototype.toString to prevent [object Object] corruption
     // When models write: "text " + obj, JavaScript calls obj.toString()
     // By default this returns [object Object], losing the data
@@ -265,7 +270,7 @@ export class VMSandbox implements SandboxEnvironment {
       })();
     `);
     patchScript.runInContext(ctx);
-    
+
     return ctx;
   }
 
@@ -281,10 +286,7 @@ export class VMSandbox implements SandboxEnvironment {
     try {
       // Transform const/let declarations to globalThis assignments for persistence
       // This allows variables to survive across code blocks
-      const transformedCode = code.replace(
-        /\b(const|let)\s+(\w+)\s*=/g,
-        'globalThis.$2 ='
-      );
+      const transformedCode = code.replace(/\b(const|let)\s+(\w+)\s*=/g, 'globalThis.$2 =');
 
       // Wrap code in an async IIFE
       const wrappedCode = `

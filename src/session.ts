@@ -7,7 +7,7 @@
  * - Session sharing and debugging
  */
 
-import { randomUUID } from 'crypto';
+import { randomUUID, createHash } from 'crypto';
 import { readFile, writeFile, mkdir } from 'fs/promises';
 import { dirname, join } from 'path';
 import type {
@@ -28,11 +28,11 @@ import type {
  * Session status indicating current state.
  */
 export type SessionStatus =
-  | 'created'      // Session created but not started
-  | 'running'      // Currently executing
-  | 'paused'       // Execution paused (can be resumed)
-  | 'completed'    // Finished successfully
-  | 'failed'       // Finished with error
+  | 'created' // Session created but not started
+  | 'running' // Currently executing
+  | 'paused' // Execution paused (can be resumed)
+  | 'completed' // Finished successfully
+  | 'failed' // Finished with error
   | 'interrupted'; // Manually interrupted
 
 /**
@@ -356,9 +356,7 @@ export async function saveSession(
   }
 
   // Save session JSON
-  const json = pretty
-    ? JSON.stringify(sessionToSave, null, 2)
-    : JSON.stringify(sessionToSave);
+  const json = pretty ? JSON.stringify(sessionToSave, null, 2) : JSON.stringify(sessionToSave);
 
   await writeFile(path, json, 'utf-8');
 }
@@ -417,7 +415,16 @@ export function validateSession(session: unknown): asserts session is RLMSession
   const s = session as Record<string, unknown>;
 
   // Required fields
-  const requiredFields = ['id', 'version', 'status', 'query', 'config', 'checkpoint', 'trace', 'cost'];
+  const requiredFields = [
+    'id',
+    'version',
+    'status',
+    'query',
+    'config',
+    'checkpoint',
+    'trace',
+    'cost',
+  ];
   for (const field of requiredFields) {
     if (!(field in s)) {
       throw new Error(`Invalid session: missing required field '${field}'`);
@@ -430,7 +437,14 @@ export function validateSession(session: unknown): asserts session is RLMSession
   }
 
   // Status check
-  const validStatuses: SessionStatus[] = ['created', 'running', 'paused', 'completed', 'failed', 'interrupted'];
+  const validStatuses: SessionStatus[] = [
+    'created',
+    'running',
+    'paused',
+    'completed',
+    'failed',
+    'interrupted',
+  ];
   if (!validStatuses.includes(s.status as SessionStatus)) {
     throw new Error(`Invalid session: unknown status '${s.status}'`);
   }
@@ -537,10 +551,7 @@ export function updateSessionCost(
       totalTokens: session.cost.totalTokens + usage.totalTokens,
       totalCalls: callNumber,
       estimatedCost: session.cost.estimatedCost + cost,
-      callBreakdown: [
-        ...session.cost.callBreakdown,
-        { callNumber, usage, cost },
-      ],
+      callBreakdown: [...session.cost.callBreakdown, { callNumber, usage, cost }],
     },
     updatedAt: new Date().toISOString(),
   };
@@ -707,9 +718,8 @@ export class SessionManager {
             id: session.id,
             name: session.metadata.name,
             status: session.status,
-            query: session.query.length > 100
-              ? session.query.substring(0, 100) + '...'
-              : session.query,
+            query:
+              session.query.length > 100 ? session.query.substring(0, 100) + '...' : session.query,
             model: session.config.model,
             createdAt: session.createdAt,
             updatedAt: session.updatedAt,
@@ -720,8 +730,8 @@ export class SessionManager {
       }
 
       // Sort by updatedAt descending
-      return entries.sort((a, b) =>
-        new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+      return entries.sort(
+        (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
       );
     } catch {
       return [];
@@ -809,12 +819,10 @@ export function getSessionProgress(session: RLMSession): {
   tokensUsed: number;
   costSoFar: number;
 } {
-  const percentComplete = session.status === 'completed'
-    ? 100
-    : Math.min(
-        (session.checkpoint.iteration / session.config.maxIterations) * 100,
-        99
-      );
+  const percentComplete =
+    session.status === 'completed'
+      ? 100
+      : Math.min((session.checkpoint.iteration / session.config.maxIterations) * 100, 99);
 
   return {
     iteration: session.checkpoint.iteration,
@@ -856,11 +864,8 @@ export function importSession(json: string): RLMSession {
  * @returns Deterministic session ID
  */
 export function createSessionId(query: string, timestamp?: Date): string {
-  const { createHash } = require('crypto');
+  // createHash imported at top of file
   const ts = (timestamp ?? new Date()).toISOString().split('T')[0];
-  const hash = createHash('sha256')
-    .update(query)
-    .digest('hex')
-    .substring(0, 8);
+  const hash = createHash('sha256').update(query).digest('hex').substring(0, 8);
   return `${ts}-${hash}`;
 }

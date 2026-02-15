@@ -166,7 +166,10 @@ export class TraceReporter {
   /**
    * Finalize the session and write summary.
    */
-  finalize(result?: { response: string; usage: { totalTokens: number; estimatedCost: number } }): void {
+  finalize(result?: {
+    response: string;
+    usage: { totalTokens: number; estimatedCost: number };
+  }): void {
     const endTime = Date.now();
     const summary = {
       type: 'session_end',
@@ -248,7 +251,21 @@ export class TraceReporter {
    * Format a trace entry for terminal display.
    */
   formatEntry(entry: TraceEntry): string {
-    const c = this.options.colorize ? COLORS : { reset: '', bright: '', dim: '', red: '', green: '', yellow: '', blue: '', magenta: '', cyan: '', white: '', gray: '' };
+    const c = this.options.colorize
+      ? COLORS
+      : {
+          reset: '',
+          bright: '',
+          dim: '',
+          red: '',
+          green: '',
+          yellow: '',
+          blue: '',
+          magenta: '',
+          cyan: '',
+          white: '',
+          gray: '',
+        };
     const timestamp = this.options.showTimestamps
       ? `${c.gray}[${new Date(entry.timestamp).toISOString()}]${c.reset} `
       : '';
@@ -261,9 +278,10 @@ export class TraceReporter {
       case 'sub_llm_call':
         return `${timestamp}${depth}${c.magenta}[SUB-LLM]${c.reset} Query: "${this.truncate(entry.data.prompt, 50)}" - ${entry.data.usage.totalTokens} tokens`;
 
-      case 'code_execution':
+      case 'code_execution': {
         const status = entry.data.error ? `${c.red}ERROR${c.reset}` : `${c.green}OK${c.reset}`;
         return `${timestamp}${depth}${c.cyan}[CODE]${c.reset} ${status} (${entry.data.executionTime}ms) - ${this.truncate(entry.data.code, 60)}`;
+      }
 
       case 'final_output':
         return `${timestamp}${depth}${c.green}[FINAL]${c.reset} ${c.bright}${entry.data.method}${c.reset}: "${this.truncate(entry.data.output, 80)}"`;
@@ -298,7 +316,21 @@ export class TraceReporter {
    * Print a summary to console.
    */
   printSummary(): void {
-    const c = this.options.colorize ? COLORS : { reset: '', bright: '', dim: '', red: '', green: '', yellow: '', blue: '', magenta: '', cyan: '', white: '', gray: '' };
+    const c = this.options.colorize
+      ? COLORS
+      : {
+          reset: '',
+          bright: '',
+          dim: '',
+          red: '',
+          green: '',
+          yellow: '',
+          blue: '',
+          magenta: '',
+          cyan: '',
+          white: '',
+          gray: '',
+        };
     const stats = this.getStatistics();
 
     console.log(`\n${c.bright}=== RLM Execution Summary ===${c.reset}`);
@@ -374,9 +406,7 @@ export class TraceReporter {
    * Export to JSONL format.
    */
   toJSONL(): string {
-    return this.entries
-      .map((e) => JSON.stringify({ ...e, sessionId: this.sessionId }))
-      .join('\n');
+    return this.entries.map((e) => JSON.stringify({ ...e, sessionId: this.sessionId })).join('\n');
   }
 
   /**

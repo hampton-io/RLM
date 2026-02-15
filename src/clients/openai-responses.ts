@@ -268,7 +268,9 @@ export class OpenAIResponsesClient {
 
     const apiKey = config.apiKey || process.env.OPENAI_API_KEY;
     if (!apiKey) {
-      throw new Error('OpenAI API key is required. Set OPENAI_API_KEY environment variable or pass apiKey in config.');
+      throw new Error(
+        'OpenAI API key is required. Set OPENAI_API_KEY environment variable or pass apiKey in config.'
+      );
     }
 
     this.client = new OpenAI({
@@ -432,11 +434,13 @@ export class OpenAIResponsesClient {
 
     return this.create(query, {
       ...restOptions,
-      tools: [{
-        type: 'file_search',
-        vector_store_ids: vectorStoreIds,
-        max_num_results: maxResults,
-      }],
+      tools: [
+        {
+          type: 'file_search',
+          vector_store_ids: vectorStoreIds,
+          max_num_results: maxResults,
+        },
+      ],
     });
   }
 
@@ -490,7 +494,7 @@ export class OpenAIResponsesClient {
             });
             break;
 
-          case 'message':
+          case 'message': {
             const messageContent: TextOutputContent[] = [];
 
             if (item.content && Array.isArray(item.content)) {
@@ -516,6 +520,7 @@ export class OpenAIResponsesClient {
               content: messageContent,
             });
             break;
+          }
         }
       }
     }
@@ -530,11 +535,13 @@ export class OpenAIResponsesClient {
       model: response.model || this.model,
       output,
       output_text: outputText,
-      usage: response.usage ? {
-        input_tokens: response.usage.input_tokens || response.usage.prompt_tokens || 0,
-        output_tokens: response.usage.output_tokens || response.usage.completion_tokens || 0,
-        total_tokens: response.usage.total_tokens || 0,
-      } : undefined,
+      usage: response.usage
+        ? {
+            input_tokens: response.usage.input_tokens || response.usage.prompt_tokens || 0,
+            output_tokens: response.usage.output_tokens || response.usage.completion_tokens || 0,
+            total_tokens: response.usage.total_tokens || 0,
+          }
+        : undefined,
       citations,
     };
   }
@@ -599,9 +606,15 @@ export function createResponsesClient(
  */
 export function supportsResponsesAPI(model: string): model is ResponsesModel {
   const supportedModels: ResponsesModel[] = [
-    'gpt-5', 'gpt-5-mini', 'gpt-5.1', 'gpt-5.2',
-    'gpt-4.1', 'gpt-4.1-mini', 'gpt-4.1-nano',
-    'gpt-4o', 'gpt-4o-mini',
+    'gpt-5',
+    'gpt-5-mini',
+    'gpt-5.1',
+    'gpt-5.2',
+    'gpt-4.1',
+    'gpt-4.1-mini',
+    'gpt-4.1-nano',
+    'gpt-4o',
+    'gpt-4o-mini',
   ];
   return supportedModels.includes(model as ResponsesModel);
 }
@@ -668,15 +681,21 @@ export function formatCitationsAsFootnotes(text: string, citations: Citation[]):
   for (const citation of sortedCitations) {
     if (citation.type === 'url_citation') {
       const footnoteRef = `[${footnoteIndex}]`;
-      footnotes.unshift(`[${footnoteIndex}]: ${citation.url}${citation.title ? ` "${citation.title}"` : ''}`);
+      footnotes.unshift(
+        `[${footnoteIndex}]: ${citation.url}${citation.title ? ` "${citation.title}"` : ''}`
+      );
       // Insert footnote reference at end_index
-      formattedText = formattedText.slice(0, citation.end_index) + footnoteRef + formattedText.slice(citation.end_index);
+      formattedText =
+        formattedText.slice(0, citation.end_index) +
+        footnoteRef +
+        formattedText.slice(citation.end_index);
       footnoteIndex++;
     } else if (citation.type === 'file_citation') {
       const footnoteRef = `[${footnoteIndex}]`;
       footnotes.unshift(`[${footnoteIndex}]: ${citation.filename} (file: ${citation.file_id})`);
       // Insert footnote reference at index
-      formattedText = formattedText.slice(0, citation.index) + footnoteRef + formattedText.slice(citation.index);
+      formattedText =
+        formattedText.slice(0, citation.index) + footnoteRef + formattedText.slice(citation.index);
       footnoteIndex++;
     }
   }

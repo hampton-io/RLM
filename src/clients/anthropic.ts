@@ -32,7 +32,9 @@ export class AnthropicClient extends BaseLLMClient {
 
     const apiKey = config.apiKey || process.env.ANTHROPIC_API_KEY;
     if (!apiKey) {
-      throw new Error('Anthropic API key is required. Set ANTHROPIC_API_KEY environment variable or pass apiKey in config.');
+      throw new Error(
+        'Anthropic API key is required. Set ANTHROPIC_API_KEY environment variable or pass apiKey in config.'
+      );
     }
 
     this.client = new Anthropic({
@@ -97,7 +99,10 @@ export class AnthropicClient extends BaseLLMClient {
   /**
    * Generate a completion using Anthropic's messages API.
    */
-  async completion(messages: Message[], options: CompletionOptions = {}): Promise<CompletionResult> {
+  async completion(
+    messages: Message[],
+    options: CompletionOptions = {}
+  ): Promise<CompletionResult> {
     return this.withRetry(async () => {
       // Extract system message if present
       const systemMessage = messages.find((m) => m.role === 'system');
@@ -124,7 +129,7 @@ export class AnthropicClient extends BaseLLMClient {
         };
       }
 
-      const response = await this.client.messages.create(requestParams) as AnthropicMessage;
+      const response = (await this.client.messages.create(requestParams)) as AnthropicMessage;
 
       // Extract text and thinking content from response
       let content = '';
@@ -200,7 +205,7 @@ export class AnthropicClient extends BaseLLMClient {
 
     let fullContent = '';
     let fullThinking = '';
-    let usage = { promptTokens: 0, completionTokens: 0, totalTokens: 0 };
+    const usage = { promptTokens: 0, completionTokens: 0, totalTokens: 0 };
     let finishReason: CompletionResult['finishReason'] = 'unknown';
 
     for await (const event of stream) {
@@ -246,9 +251,7 @@ export class AnthropicClient extends BaseLLMClient {
   /**
    * Map Anthropic stop reason to our standard format.
    */
-  private mapStopReason(
-    reason: string | null
-  ): CompletionResult['finishReason'] {
+  private mapStopReason(reason: string | null): CompletionResult['finishReason'] {
     switch (reason) {
       case 'end_turn':
       case 'stop_sequence':

@@ -78,9 +78,9 @@ const TOKENS_PER_CHAR: Record<ModelProvider, number> = {
  * Each message has structural tokens (role, separators, etc.)
  */
 const MESSAGE_OVERHEAD: Record<ModelProvider, number> = {
-  openai: 4,    // <|im_start|>role<|im_sep|>...<|im_end|>
+  openai: 4, // <|im_start|>role<|im_sep|>...<|im_end|>
   anthropic: 3, // Human:/Assistant: markers
-  google: 2,    // Role markers
+  google: 2, // Role markers
 };
 
 /**
@@ -91,10 +91,7 @@ const RLM_SYSTEM_PROMPT_TOKENS = 800;
 /**
  * Estimate tokens for a string using provider-specific heuristics.
  */
-export function estimateTokensForString(
-  text: string,
-  provider: ModelProvider = 'openai'
-): number {
+export function estimateTokensForString(text: string, provider: ModelProvider = 'openai'): number {
   if (!text) return 0;
 
   const ratio = TOKENS_PER_CHAR[provider] ?? 0.25;
@@ -188,7 +185,7 @@ export function estimateOutputTokens(
 
   // Base estimate: query length * multiplier
   const queryTokens = estimateTokensForString(query, provider);
-  let baseOutput = Math.max(queryTokens * outputMultiplier, 100);
+  const baseOutput = Math.max(queryTokens * outputMultiplier, 100);
 
   // RLM generates code, so expect more output per iteration
   // Each iteration: ~200 tokens for thinking + code + explanation
@@ -288,11 +285,11 @@ export function estimateTotalCost(
   const subsequentIterationCost = firstIterationCost * 0.3;
   const subsequentIterations = Math.max(iterations - 1, 0);
 
-  const totalCost = firstIterationCost + (subsequentIterationCost * subsequentIterations);
+  const totalCost = firstIterationCost + subsequentIterationCost * subsequentIterations;
 
   // Recalculate tokens for total
   const totalInputTokens = Math.ceil(
-    singleEstimate.tokens.inputTokens * (1 + (subsequentIterations * 0.3))
+    singleEstimate.tokens.inputTokens * (1 + subsequentIterations * 0.3)
   );
   const totalOutputTokens = singleEstimate.tokens.outputTokens * iterations;
 
@@ -363,9 +360,7 @@ export function compareCosts(
   models: SupportedModel[],
   options: EstimateOptions = {}
 ): Array<CostEstimate & { rank: number }> {
-  const estimates = models.map((model) =>
-    estimateTotalCost(query, context, model, options)
-  );
+  const estimates = models.map((model) => estimateTotalCost(query, context, model, options));
 
   // Sort by cost
   estimates.sort((a, b) => a.cost - b.cost);
