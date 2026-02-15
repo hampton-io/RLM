@@ -143,16 +143,10 @@ function record(r: TestResult) {
 // Tests
 // ---------------------------------------------------------------------------
 
-// Skip entire suite in CI / environments without API keys
-const describeWithKeys = HAS_API_KEYS ? describe.each(MODELS_TO_TEST) : describe.skip.each(MODELS_TO_TEST);
-
-describeWithKeys('Model Protocol: %s', (model) => {
+describe.skipIf(!HAS_API_KEYS).each(MODELS_TO_TEST)('Model Protocol: %s', (model) => {
   let executor: RLMExecutor;
 
   beforeAll(() => {
-    if (!hasKeyForModel(model)) {
-      throw new Error(`No API key for ${model} — skipping`);
-    }
     executor = new RLMExecutor({
       model: model as any,
       maxIterations: 5,
