@@ -292,6 +292,7 @@ export class OpenAIResponsesClient {
     input: string | ResponsesInputMessage[],
     options: ResponsesOptions = {}
   ): Promise<ResponsesResult> {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- OpenAI SDK doesn't expose .responses types yet
     const response = await (this.client as any).responses.create({
       model: this.model,
       input: typeof input === 'string' ? input : input,
@@ -316,6 +317,7 @@ export class OpenAIResponsesClient {
     input: string | ResponsesInputMessage[],
     options: Omit<ResponsesOptions, 'stream'> = {}
   ): AsyncGenerator<ResponsesStreamEvent, ResponsesResult, unknown> {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- OpenAI SDK doesn't expose .responses types yet
     const stream = await (this.client as any).responses.create({
       model: this.model,
       input: typeof input === 'string' ? input : input,
@@ -466,7 +468,7 @@ export class OpenAIResponsesClient {
   /**
    * Parse API response into our format.
    */
-  private parseResponse(response: any): ResponsesResult {
+  private parseResponse(response: Record<string, unknown>): ResponsesResult {
     const output: OutputItem[] = [];
     const citations: Citation[] = [];
     let outputText = '';
@@ -549,7 +551,7 @@ export class OpenAIResponsesClient {
   /**
    * Parse annotation objects into citations.
    */
-  private parseAnnotations(annotations: any[] | undefined): Citation[] {
+  private parseAnnotations(annotations: Record<string, unknown>[] | undefined): Citation[] {
     if (!annotations || !Array.isArray(annotations)) {
       return [];
     }
