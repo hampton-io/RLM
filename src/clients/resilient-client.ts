@@ -62,22 +62,16 @@ export class ResilientClient implements LLMClient {
   /**
    * Execute a completion with retry logic.
    */
-  async completion(
-    messages: Message[],
-    options?: CompletionOptions
-  ): Promise<CompletionResult> {
-    return withRetry(
-      () => this.client.completion(messages, options),
-      {
-        maxRetries: this.options.maxRetries,
-        initialDelay: this.options.initialDelay,
-        maxDelay: this.options.maxDelay,
-        backoffMultiplier: this.options.backoffMultiplier,
-        jitter: this.options.jitter,
-        isRetryable: this.options.isRetryable,
-        onRetry: this.options.onRetry,
-      }
-    );
+  async completion(messages: Message[], options?: CompletionOptions): Promise<CompletionResult> {
+    return withRetry(() => this.client.completion(messages, options), {
+      maxRetries: this.options.maxRetries,
+      initialDelay: this.options.initialDelay,
+      maxDelay: this.options.maxDelay,
+      backoffMultiplier: this.options.backoffMultiplier,
+      jitter: this.options.jitter,
+      isRetryable: this.options.isRetryable,
+      onRetry: this.options.onRetry,
+    });
   }
 
   /**

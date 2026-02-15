@@ -1,4 +1,10 @@
-import type { Message, CompletionOptions, CompletionResult, StreamChunk, ModelProvider } from '../types.js';
+import type {
+  Message,
+  CompletionOptions,
+  CompletionResult,
+  StreamChunk,
+  ModelProvider,
+} from '../types.js';
 import type { LLMClient, LLMClientConfig, TokenCount } from './types.js';
 import { estimateTokensForString, estimateTokensForMessages } from '../utils/tokens.js';
 
@@ -90,7 +96,11 @@ export abstract class BaseLLMClient implements LLMClient {
       const message = error.message.toLowerCase();
 
       // Authentication errors
-      if (message.includes('api key') || message.includes('unauthorized') || message.includes('401')) {
+      if (
+        message.includes('api key') ||
+        message.includes('unauthorized') ||
+        message.includes('401')
+      ) {
         return true;
       }
 

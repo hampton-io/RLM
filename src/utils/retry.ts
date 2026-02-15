@@ -47,12 +47,21 @@ export function isRetryableError(error: unknown): boolean {
     }
 
     // Server errors (5xx)
-    if (message.includes('500') || message.includes('502') || message.includes('503') || message.includes('504')) {
+    if (
+      message.includes('500') ||
+      message.includes('502') ||
+      message.includes('503') ||
+      message.includes('504')
+    ) {
       return true;
     }
 
     // Network errors
-    if (message.includes('network') || message.includes('timeout') || message.includes('connection')) {
+    if (
+      message.includes('network') ||
+      message.includes('timeout') ||
+      message.includes('connection')
+    ) {
       return true;
     }
 
@@ -84,7 +93,9 @@ export function isRetryableError(error: unknown): boolean {
  */
 export function calculateRetryDelay(
   attempt: number,
-  options: Required<Pick<RetryOptions, 'initialDelay' | 'maxDelay' | 'backoffMultiplier' | 'jitter'>>
+  options: Required<
+    Pick<RetryOptions, 'initialDelay' | 'maxDelay' | 'backoffMultiplier' | 'jitter'>
+  >
 ): number {
   // Exponential backoff
   const exponentialDelay = options.initialDelay * Math.pow(options.backoffMultiplier, attempt - 1);
@@ -117,10 +128,7 @@ function sleep(ms: number): Promise<void> {
  * );
  * ```
  */
-export async function withRetry<T>(
-  fn: () => Promise<T>,
-  options: RetryOptions = {}
-): Promise<T> {
+export async function withRetry<T>(fn: () => Promise<T>, options: RetryOptions = {}): Promise<T> {
   const {
     maxRetries = 3,
     initialDelay = 1000,

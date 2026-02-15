@@ -128,11 +128,19 @@ export interface BatchResult {
  */
 export class BatchProcessor {
   private rlm: {
-    completion: (query: string, context?: string, options?: RLMCompletionOptions) => Promise<RLMResult>;
+    completion: (
+      query: string,
+      context?: string,
+      options?: RLMCompletionOptions
+    ) => Promise<RLMResult>;
   };
 
   constructor(rlm: {
-    completion: (query: string, context?: string, options?: RLMCompletionOptions) => Promise<RLMResult>;
+    completion: (
+      query: string,
+      context?: string,
+      options?: RLMCompletionOptions
+    ) => Promise<RLMResult>;
   }) {
     this.rlm = rlm;
   }

@@ -5,7 +5,14 @@
  * when the primary model fails.
  */
 
-import type { SupportedModel, ModelProvider, Message, CompletionOptions, CompletionResult, StreamChunk } from './types.js';
+import type {
+  SupportedModel,
+  ModelProvider,
+  Message,
+  CompletionOptions,
+  CompletionResult,
+  StreamChunk,
+} from './types.js';
 import type { LLMClient, LLMClientConfig, TokenCount } from './clients/types.js';
 import { createClient, detectProvider } from './clients/index.js';
 
@@ -155,11 +162,13 @@ export function isServerError(error: Error): boolean {
 /**
  * Check if an error is retryable (should trigger fallback).
  */
-export function isRetryableError(
-  error: Error,
-  options: FallbackChainOptions
-): boolean {
-  const { retryOnRateLimit = true, retryOnTimeout = true, retryOnServerError = true, shouldFallback } = options;
+export function isRetryableError(error: Error, options: FallbackChainOptions): boolean {
+  const {
+    retryOnRateLimit = true,
+    retryOnTimeout = true,
+    retryOnServerError = true,
+    shouldFallback,
+  } = options;
 
   // Custom filter takes precedence
   if (shouldFallback) {
@@ -271,13 +280,8 @@ export class FallbackChainClient implements LLMClient {
   /**
    * Generate a completion with automatic fallback.
    */
-  async completion(
-    messages: Message[],
-    options?: CompletionOptions
-  ): Promise<CompletionResult> {
-    const result = await this.executeWithFallback((client) =>
-      client.completion(messages, options)
-    );
+  async completion(messages: Message[], options?: CompletionOptions): Promise<CompletionResult> {
+    const result = await this.executeWithFallback((client) => client.completion(messages, options));
     return result.result;
   }
 

@@ -288,11 +288,7 @@ export {
 export type { RLMConfigOptions, ResolvedConfig } from './config.js';
 
 // Cost tracking exports
-export {
-  CostTracker,
-  BudgetExceededError,
-  TokenLimitExceededError,
-} from './cost-tracker.js';
+export { CostTracker, BudgetExceededError, TokenLimitExceededError } from './cost-tracker.js';
 
 // Rate limiting exports
 export {
@@ -318,32 +314,14 @@ export {
   COST_OPTIMIZED_CHAIN,
   QUALITY_OPTIMIZED_CHAIN,
 } from './fallback.js';
-export type {
-  FallbackEvent,
-  FallbackChainOptions,
-  FallbackChainResult,
-} from './fallback.js';
+export type { FallbackEvent, FallbackChainOptions, FallbackChainResult } from './fallback.js';
 
 // Cache exports
-export {
-  RLMCache,
-  MemoryCacheBackend,
-  withCache,
-  hashString,
-} from './cache.js';
-export type {
-  CacheEntry,
-  CacheStats,
-  CacheOptions,
-  CacheBackend,
-} from './cache.js';
+export { RLMCache, MemoryCacheBackend, withCache, hashString } from './cache.js';
+export type { CacheEntry, CacheStats, CacheOptions, CacheBackend } from './cache.js';
 
 // Batch processing exports
-export {
-  BatchProcessor,
-  createBatchItems,
-  mapBatch,
-} from './batch.js';
+export { BatchProcessor, createBatchItems, mapBatch } from './batch.js';
 export type {
   BatchItem,
   BatchItemResult,

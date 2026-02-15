@@ -33,9 +33,13 @@ export class OpenAIEmbeddingClient implements EmbeddingClient {
   readonly model: OpenAIEmbeddingModel;
 
   private client: OpenAI;
-  private config: Required<Omit<EmbeddingClientConfig, 'apiKey' | 'baseUrl'>> & Pick<EmbeddingClientConfig, 'apiKey' | 'baseUrl'>;
+  private config: Required<Omit<EmbeddingClientConfig, 'apiKey' | 'baseUrl'>> &
+    Pick<EmbeddingClientConfig, 'apiKey' | 'baseUrl'>;
 
-  constructor(model: OpenAIEmbeddingModel = 'text-embedding-3-small', config: EmbeddingClientConfig = {}) {
+  constructor(
+    model: OpenAIEmbeddingModel = 'text-embedding-3-small',
+    config: EmbeddingClientConfig = {}
+  ) {
     this.model = model;
     this.config = {
       ...DEFAULT_CONFIG,
@@ -44,7 +48,9 @@ export class OpenAIEmbeddingClient implements EmbeddingClient {
 
     const apiKey = config.apiKey || process.env.OPENAI_API_KEY;
     if (!apiKey) {
-      throw new Error('OpenAI API key is required. Set OPENAI_API_KEY environment variable or pass apiKey in config.');
+      throw new Error(
+        'OpenAI API key is required. Set OPENAI_API_KEY environment variable or pass apiKey in config.'
+      );
     }
 
     this.client = new OpenAI({

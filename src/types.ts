@@ -125,7 +125,9 @@ export type MessageContent = string | (TextContent | ImageContent)[];
 /**
  * Check if content is multimodal (array of parts).
  */
-export function isMultimodalContent(content: MessageContent): content is (TextContent | ImageContent)[] {
+export function isMultimodalContent(
+  content: MessageContent
+): content is (TextContent | ImageContent)[] {
   return Array.isArray(content);
 }
 
@@ -153,7 +155,7 @@ export function getTextFromContent(content: MessageContent): string {
   }
   return content
     .filter(isTextContent)
-    .map(part => part.text)
+    .map((part) => part.text)
     .join('\n');
 }
 
@@ -217,15 +219,15 @@ export interface StreamChunk {
 // =============================================================================
 
 export interface SandboxOptions {
-  timeout?: number;        // Execution timeout in ms (default: 10000)
-  memoryLimit?: number;    // Memory limit in MB (default: 128)
+  timeout?: number; // Execution timeout in ms (default: 10000)
+  memoryLimit?: number; // Memory limit in MB (default: 128)
 }
 
 export interface SandboxResult {
-  output: string;          // Captured console output
-  error?: string;          // Error message if execution failed
-  variables: Record<string, unknown>;  // Variables in sandbox scope
-  executionTime: number;   // Time taken in ms
+  output: string; // Captured console output
+  error?: string; // Error message if execution failed
+  variables: Record<string, unknown>; // Variables in sandbox scope
+  executionTime: number; // Time taken in ms
 }
 
 export interface SandboxEnvironment {
@@ -242,13 +244,13 @@ export interface SandboxEnvironment {
 
 export interface RLMOptions {
   model: SupportedModel;
-  provider?: ModelProvider;      // Auto-detected from model if not specified
-  maxIterations?: number;        // Max REPL iterations (default: 20)
-  maxDepth?: number;             // Max recursion depth (default: 1)
-  sandboxTimeout?: number;       // Sandbox execution timeout (default: 10000)
-  verbose?: boolean;             // Log execution details (default: false)
-  temperature?: number;          // LLM temperature (default: 0)
-  apiKey?: string;               // Override env var API key
+  provider?: ModelProvider; // Auto-detected from model if not specified
+  maxIterations?: number; // Max REPL iterations (default: 20)
+  maxDepth?: number; // Max recursion depth (default: 1)
+  sandboxTimeout?: number; // Sandbox execution timeout (default: 10000)
+  verbose?: boolean; // Log execution details (default: false)
+  temperature?: number; // LLM temperature (default: 0)
+  apiKey?: string; // Override env var API key
   /** Maximum total cost in USD before stopping */
   maxCost?: number;
   /** Maximum total tokens before stopping */
@@ -260,8 +262,8 @@ export interface RLMOptions {
 }
 
 export interface RLMCompletionOptions {
-  stream?: boolean;              // Stream results (default: false)
-  onStep?: (step: TraceEntry) => void;  // Callback for each execution step
+  stream?: boolean; // Stream results (default: false)
+  onStep?: (step: TraceEntry) => void; // Callback for each execution step
 }
 
 export interface DryRunResult {
@@ -493,15 +495,17 @@ export interface ErrorTrace {
 export const CompletionRequestSchema = z.object({
   query: z.string().min(1),
   context: z.string().optional(),
-  options: z.object({
-    model: z.string().optional(),
-    maxIterations: z.number().positive().optional(),
-    maxDepth: z.number().nonnegative().optional(),
-    maxCost: z.number().positive().optional(),
-    maxTokens: z.number().positive().optional(),
-    temperature: z.number().min(0).max(2).optional(),
-    stream: z.boolean().optional(),
-  }).optional(),
+  options: z
+    .object({
+      model: z.string().optional(),
+      maxIterations: z.number().positive().optional(),
+      maxDepth: z.number().nonnegative().optional(),
+      maxCost: z.number().positive().optional(),
+      maxTokens: z.number().positive().optional(),
+      temperature: z.number().min(0).max(2).optional(),
+      stream: z.boolean().optional(),
+    })
+    .optional(),
 });
 
 export type CompletionRequest = z.infer<typeof CompletionRequestSchema>;

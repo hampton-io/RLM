@@ -9,19 +9,17 @@ import type { LLMClient } from './clients/types.js';
 import { createClient, calculateCost } from './clients/index.js';
 import { createSandbox } from './sandbox/index.js';
 import { getSystemPrompt, createUserPrompt } from './prompts/index.js';
-import {
-  parseLLMOutput,
-  maxIterationsError,
-  wrapError,
-  isRLMError,
-} from './utils/index.js';
+import { parseLLMOutput, maxIterationsError, wrapError, isRLMError } from './utils/index.js';
 import { RLMLogger } from './logger/index.js';
 import { CostTracker, BudgetExceededError, TokenLimitExceededError } from './cost-tracker.js';
 
 /**
  * Default RLM options.
  */
-const DEFAULT_OPTIONS: Required<Omit<RLMOptions, 'apiKey' | 'provider' | 'extendedThinking' | 'image' | 'maxCost' | 'maxTokens'>> & Pick<RLMOptions, 'maxCost' | 'maxTokens'> = {
+const DEFAULT_OPTIONS: Required<
+  Omit<RLMOptions, 'apiKey' | 'provider' | 'extendedThinking' | 'image' | 'maxCost' | 'maxTokens'>
+> &
+  Pick<RLMOptions, 'maxCost' | 'maxTokens'> = {
   model: 'gpt-5.2',
   maxIterations: 20,
   maxDepth: 1,
@@ -36,7 +34,13 @@ const DEFAULT_OPTIONS: Required<Omit<RLMOptions, 'apiKey' | 'provider' | 'extend
  * RLM Streaming Executor - yields events as they occur during execution.
  */
 export class RLMStreamingExecutor {
-  private options: Required<Omit<RLMOptions, 'apiKey' | 'provider' | 'extendedThinking' | 'image' | 'maxCost' | 'maxTokens'>> & Pick<RLMOptions, 'apiKey' | 'provider' | 'extendedThinking' | 'image' | 'maxCost' | 'maxTokens'>;
+  private options: Required<
+    Omit<RLMOptions, 'apiKey' | 'provider' | 'extendedThinking' | 'image' | 'maxCost' | 'maxTokens'>
+  > &
+    Pick<
+      RLMOptions,
+      'apiKey' | 'provider' | 'extendedThinking' | 'image' | 'maxCost' | 'maxTokens'
+    >;
   private client: LLMClient;
   private logger: RLMLogger;
   private costTracker: CostTracker;
@@ -192,7 +196,12 @@ export class RLMStreamingExecutor {
           const varValue = sandbox.getVariable(String(sandboxFinalVarName));
           finalAnswer = this.stringify(varValue);
           finalMethod = 'FINAL_VAR';
-          this.logger.logFinalOutput(0, finalAnswer ?? '', 'FINAL_VAR', String(sandboxFinalVarName));
+          this.logger.logFinalOutput(
+            0,
+            finalAnswer ?? '',
+            'FINAL_VAR',
+            String(sandboxFinalVarName)
+          );
 
           yield this.createEvent('final', {
             response: finalAnswer ?? '',
@@ -259,7 +268,8 @@ export class RLMStreamingExecutor {
           });
           messages.push({
             role: 'user',
-            content: 'Please write code to explore the context or provide your final answer using FINAL("answer").',
+            content:
+              'Please write code to explore the context or provide your final answer using FINAL("answer").',
           });
         }
       }
@@ -328,9 +338,7 @@ export class RLMStreamingExecutor {
       },
       onLLMQueryParallel: async (queries) => {
         const results = await Promise.all(
-          queries.map((q) =>
-            this.handleSubQuery(q.prompt, q.context ?? context, depth + 1)
-          )
+          queries.map((q) => this.handleSubQuery(q.prompt, q.context ?? context, depth + 1))
         );
         return results;
       },
@@ -340,11 +348,7 @@ export class RLMStreamingExecutor {
   /**
    * Handle a sub-LLM query from within the sandbox.
    */
-  private async handleSubQuery(
-    prompt: string,
-    subContext: string,
-    depth: number
-  ): Promise<string> {
+  private async handleSubQuery(prompt: string, subContext: string, depth: number): Promise<string> {
     if (depth > this.options.maxDepth) {
       return `[Error: Maximum recursion depth (${this.options.maxDepth}) exceeded]`;
     }
@@ -353,7 +357,8 @@ export class RLMStreamingExecutor {
       const messages: Message[] = [
         {
           role: 'system',
-          content: 'You are a helpful assistant. Answer the question based on the provided context. Be concise and direct.',
+          content:
+            'You are a helpful assistant. Answer the question based on the provided context. Be concise and direct.',
         },
         {
           role: 'user',

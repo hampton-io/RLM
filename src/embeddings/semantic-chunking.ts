@@ -238,7 +238,9 @@ export function chunkByParagraphs(text: string, options: SemanticChunkOptions = 
       // Chunk the large paragraph by sentences
       const subChunks = chunkBySentences(paragraph, opts);
       for (const subChunk of subChunks) {
-        chunks.push(createChunk(subChunk.text, index++, startOffset, startOffset + subChunk.text.length));
+        chunks.push(
+          createChunk(subChunk.text, index++, startOffset, startOffset + subChunk.text.length)
+        );
         startOffset += subChunk.text.length;
       }
       continue;
@@ -322,10 +324,7 @@ export async function chunkSemantic(
   const boundaries: number[] = [0]; // Start boundary
 
   for (let i = 1; i < segments.length; i++) {
-    const similarity = cosineSimilarity(
-      embeddings.embeddings[i - 1],
-      embeddings.embeddings[i]
-    );
+    const similarity = cosineSimilarity(embeddings.embeddings[i - 1], embeddings.embeddings[i]);
 
     // Low similarity indicates a semantic boundary
     if (similarity < opts.similarityThreshold) {
@@ -358,7 +357,12 @@ export async function chunkSemantic(
           start + chunks.length + currentGroup.length
         );
 
-        const chunk = createChunk(chunkText, chunks.length, currentOffset, currentOffset + chunkText.length);
+        const chunk = createChunk(
+          chunkText,
+          chunks.length,
+          currentOffset,
+          currentOffset + chunkText.length
+        );
         // Average the embeddings for this chunk
         if (chunkEmbeddings.length > 0) {
           chunk.embedding = averageEmbeddings(chunkEmbeddings);
@@ -377,7 +381,12 @@ export async function chunkSemantic(
     // Save remaining group
     if (currentGroup.length > 0) {
       const chunkText = currentGroup.join(opts.preserveParagraphs ? '\n\n' : ' ');
-      const chunk = createChunk(chunkText, chunks.length, currentOffset, currentOffset + chunkText.length);
+      const chunk = createChunk(
+        chunkText,
+        chunks.length,
+        currentOffset,
+        currentOffset + chunkText.length
+      );
 
       // Get embedding for this chunk
       const chunkEmbedding = await embeddingClient.embed(chunkText);

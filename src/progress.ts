@@ -532,11 +532,7 @@ export function streamToProgress(
 /**
  * Progress bar helper for CLI.
  */
-export function createProgressBar(options: {
-  total: number;
-  width?: number;
-  format?: string;
-}): {
+export function createProgressBar(options: { total: number; width?: number; format?: string }): {
   update: (current: number, extra?: Record<string, unknown>) => string;
   complete: () => string;
 } {

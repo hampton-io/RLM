@@ -3,15 +3,15 @@
  * Express router for metrics endpoints
  */
 
-import { Router, Request, Response, NextFunction } from "express";
-import { metricsCollector } from "./collector.js";
+import { Router, Request, Response, NextFunction } from 'express';
+import { metricsCollector } from './collector.js';
 
 const router = Router();
 
 // Authentication middleware
 function authenticate(req: Request, res: Response, next: NextFunction): void {
   if (!metricsCollector.isEnabled()) {
-    res.status(503).json({ error: "Metrics not enabled" });
+    res.status(503).json({ error: 'Metrics not enabled' });
     return;
   }
 
@@ -23,14 +23,14 @@ function authenticate(req: Request, res: Response, next: NextFunction): void {
   }
 
   const authHeader = req.headers.authorization;
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    res.status(401).json({ error: "Missing or invalid authorization header" });
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    res.status(401).json({ error: 'Missing or invalid authorization header' });
     return;
   }
 
   const token = authHeader.substring(7);
   if (token !== apiKey) {
-    res.status(403).json({ error: "Invalid API key" });
+    res.status(403).json({ error: 'Invalid API key' });
     return;
   }
 
@@ -44,7 +44,7 @@ router.use(authenticate);
  * GET /api/metrics/health
  * Returns health status of the RLM instance
  */
-router.get("/health", (_req: Request, res: Response) => {
+router.get('/health', (_req: Request, res: Response) => {
   const health = metricsCollector.getHealth();
   res.json(health);
 });
@@ -55,8 +55,8 @@ router.get("/health", (_req: Request, res: Response) => {
  * Query params:
  *   - period: hour | day | week | month (default: day)
  */
-router.get("/stats", (req: Request, res: Response) => {
-  const period = (req.query.period as "hour" | "day" | "week" | "month") || "day";
+router.get('/stats', (req: Request, res: Response) => {
+  const period = (req.query.period as 'hour' | 'day' | 'week' | 'month') || 'day';
   const stats = metricsCollector.getStats(period);
   res.json(stats);
 });
@@ -71,15 +71,13 @@ router.get("/stats", (req: Request, res: Response) => {
  *   - model: filter by model name
  *   - success: true | false
  */
-router.get("/queries", (req: Request, res: Response) => {
+router.get('/queries', (req: Request, res: Response) => {
   const options = {
     limit: req.query.limit ? parseInt(req.query.limit as string) : 100,
     offset: req.query.offset ? parseInt(req.query.offset as string) : 0,
     since: req.query.since ? new Date(String(req.query.since)) : undefined,
     model: req.query.model ? String(req.query.model) : undefined,
-    success: req.query.success !== undefined 
-      ? req.query.success === "true" 
-      : undefined,
+    success: req.query.success !== undefined ? req.query.success === 'true' : undefined,
   };
 
   const result = metricsCollector.getQueries(options);
@@ -90,10 +88,10 @@ router.get("/queries", (req: Request, res: Response) => {
  * GET /api/metrics/queries/:id
  * Returns a single query by ID
  */
-router.get("/queries/:id", (req: Request, res: Response) => {
+router.get('/queries/:id', (req: Request, res: Response) => {
   const query = metricsCollector.getQuery(String(req.params.id));
   if (!query) {
-    res.status(404).json({ error: "Query not found" });
+    res.status(404).json({ error: 'Query not found' });
     return;
   }
   res.json(query);
@@ -104,13 +102,13 @@ router.get("/queries/:id", (req: Request, res: Response) => {
  * Returns content source information
  * Note: This would need to be populated by the RLM instance
  */
-router.get("/content", (_req: Request, res: Response) => {
+router.get('/content', (_req: Request, res: Response) => {
   // Placeholder - would need integration with RLM context loading
   res.json({
     sources: [],
     totalBytes: 0,
     healthScore: 100,
-    message: "Content metrics not yet implemented",
+    message: 'Content metrics not yet implemented',
   });
 });
 

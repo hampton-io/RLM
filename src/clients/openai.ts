@@ -46,7 +46,9 @@ export class OpenAIClient extends BaseLLMClient {
 
     const apiKey = config.apiKey || process.env.OPENAI_API_KEY;
     if (!apiKey) {
-      throw new Error('OpenAI API key is required. Set OPENAI_API_KEY environment variable or pass apiKey in config.');
+      throw new Error(
+        'OpenAI API key is required. Set OPENAI_API_KEY environment variable or pass apiKey in config.'
+      );
     }
 
     this.client = new OpenAI({
@@ -68,9 +70,10 @@ export class OpenAIClient extends BaseLLMClient {
     return content.map((part): ChatCompletionContentPart => {
       if (isImageContent(part)) {
         // Convert our ImageContent to OpenAI's image_url format
-        const imageUrl = part.source.type === 'url'
-          ? part.source.url!
-          : `data:${part.source.mediaType};base64,${part.source.data}`;
+        const imageUrl =
+          part.source.type === 'url'
+            ? part.source.url!
+            : `data:${part.source.mediaType};base64,${part.source.data}`;
 
         return {
           type: 'image_url',
@@ -100,7 +103,10 @@ export class OpenAIClient extends BaseLLMClient {
           // System messages only support string content
           return {
             role: 'system',
-            content: typeof content === 'string' ? content : content.map(p => p.type === 'text' ? p.text : '').join('\n'),
+            content:
+              typeof content === 'string'
+                ? content
+                : content.map((p) => (p.type === 'text' ? p.text : '')).join('\n'),
           };
         case 'user':
           return {
@@ -111,7 +117,10 @@ export class OpenAIClient extends BaseLLMClient {
           // Assistant messages only support string content
           return {
             role: 'assistant',
-            content: typeof content === 'string' ? content : content.map(p => p.type === 'text' ? p.text : '').join('\n'),
+            content:
+              typeof content === 'string'
+                ? content
+                : content.map((p) => (p.type === 'text' ? p.text : '')).join('\n'),
           };
       }
     });
@@ -120,7 +129,10 @@ export class OpenAIClient extends BaseLLMClient {
   /**
    * Generate a completion using OpenAI's chat API.
    */
-  async completion(messages: Message[], options: CompletionOptions = {}): Promise<CompletionResult> {
+  async completion(
+    messages: Message[],
+    options: CompletionOptions = {}
+  ): Promise<CompletionResult> {
     return this.withRetry(async () => {
       // Build request params - reasoning models don't support temperature
       const requestParams: Parameters<typeof this.client.chat.completions.create>[0] = {
@@ -129,14 +141,16 @@ export class OpenAIClient extends BaseLLMClient {
         max_tokens: options.maxTokens,
         stop: options.stopSequences,
       };
-      
+
       // Only include temperature for non-reasoning models
       if (!isReasoningModel(this.model)) {
         requestParams.temperature = options.temperature ?? 0;
       }
 
       // Type assertion: non-streaming request always returns ChatCompletion
-      const response = await this.client.chat.completions.create(requestParams) as OpenAI.Chat.Completions.ChatCompletion;
+      const response = (await this.client.chat.completions.create(
+        requestParams
+      )) as OpenAI.Chat.Completions.ChatCompletion;
 
       const choice = response.choices[0];
       if (!choice) {
@@ -171,14 +185,14 @@ export class OpenAIClient extends BaseLLMClient {
       stream: true,
       stream_options: { include_usage: true },
     };
-    
+
     // Only include temperature for non-reasoning models
     if (!isReasoningModel(this.model)) {
       requestParams.temperature = options.temperature ?? 0;
     }
 
     const response = await this.client.chat.completions.create(requestParams);
-    
+
     // Type assertion: when stream: true, response is always a Stream
     const stream = response as AsyncIterable<OpenAI.Chat.Completions.ChatCompletionChunk>;
 
@@ -218,9 +232,7 @@ export class OpenAIClient extends BaseLLMClient {
   /**
    * Map OpenAI finish reason to our standard format.
    */
-  private mapFinishReason(
-    reason: string | null
-  ): CompletionResult['finishReason'] {
+  private mapFinishReason(reason: string | null): CompletionResult['finishReason'] {
     switch (reason) {
       case 'stop':
         return 'stop';

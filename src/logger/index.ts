@@ -1,17 +1,7 @@
-import type {
-  TraceEntry,
-  TraceEntryType,
-  TraceData,
-  Message,
-  TokenUsage,
-} from '../types.js';
+import type { TraceEntry, TraceEntryType, TraceData, Message, TokenUsage } from '../types.js';
 
 // Re-export trace reporter
-export {
-  TraceReporter,
-  createFileReporter,
-  createConsoleReporter,
-} from './trace-reporter.js';
+export { TraceReporter, createFileReporter, createConsoleReporter } from './trace-reporter.js';
 export type { TraceReporterOptions, TraceSession } from './trace-reporter.js';
 
 /**
@@ -28,12 +18,7 @@ export class RLMLogger {
   /**
    * Log an LLM call.
    */
-  logLLMCall(
-    depth: number,
-    messages: Message[],
-    response: string,
-    usage: TokenUsage
-  ): void {
+  logLLMCall(depth: number, messages: Message[], response: string, usage: TokenUsage): void {
     this.addEntry('llm_call', depth, {
       type: 'llm_call',
       messages,
@@ -213,9 +198,8 @@ export class RLMLogger {
    * Get the number of LLM calls made.
    */
   getCallCount(): number {
-    return this.entries.filter(
-      (e) => e.data.type === 'llm_call' || e.data.type === 'sub_llm_call'
-    ).length;
+    return this.entries.filter((e) => e.data.type === 'llm_call' || e.data.type === 'sub_llm_call')
+      .length;
   }
 
   /**

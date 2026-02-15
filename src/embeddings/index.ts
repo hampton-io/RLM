@@ -33,16 +33,10 @@ export type {
 } from './types.js';
 
 // OpenAI embeddings
-export {
-  OpenAIEmbeddingClient,
-  createOpenAIEmbeddingClient,
-} from './openai-embeddings.js';
+export { OpenAIEmbeddingClient, createOpenAIEmbeddingClient } from './openai-embeddings.js';
 
 // Google embeddings
-export {
-  GoogleEmbeddingClient,
-  createGoogleEmbeddingClient,
-} from './google-embeddings.js';
+export { GoogleEmbeddingClient, createGoogleEmbeddingClient } from './google-embeddings.js';
 
 // Similarity utilities
 export {

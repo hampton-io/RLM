@@ -126,7 +126,8 @@ If a field cannot be found, indicate it as "Not found" or null.`,
 export const analyzeTemplate: PromptTemplate = {
   id: 'analyze',
   name: 'Deep Analysis',
-  description: 'Perform in-depth analysis of content, identifying patterns, insights, and implications.',
+  description:
+    'Perform in-depth analysis of content, identifying patterns, insights, and implications.',
   category: 'analysis',
   template: `Perform a comprehensive analysis of the provided {{contentType}}.
 

@@ -1,4 +1,11 @@
-import type { RLMOptions, RLMCompletionOptions, RLMResult, RLMStreamEvent, SupportedModel, DryRunResult } from './types.js';
+import type {
+  RLMOptions,
+  RLMCompletionOptions,
+  RLMResult,
+  RLMStreamEvent,
+  SupportedModel,
+  DryRunResult,
+} from './types.js';
 import { RLMExecutor } from './executor.js';
 import { RLMStreamingExecutor } from './streaming-executor.js';
 import { detectProvider, MODEL_PRICING } from './clients/types.js';
@@ -111,10 +118,7 @@ export class RLM {
    * }
    * ```
    */
-  stream(
-    query: string,
-    context?: string
-  ): AsyncGenerator<RLMStreamEvent, RLMResult, unknown> {
+  stream(query: string, context?: string): AsyncGenerator<RLMStreamEvent, RLMResult, unknown> {
     if (!query || typeof query !== 'string') {
       throw invalidConfigError('Query must be a non-empty string');
     }
@@ -182,9 +186,8 @@ export class RLM {
 
     // Get system prompt preview
     const systemPrompt = getSystemPrompt();
-    const systemPromptPreview = systemPrompt.length > 500
-      ? systemPrompt.slice(0, 500) + '...'
-      : systemPrompt;
+    const systemPromptPreview =
+      systemPrompt.length > 500 ? systemPrompt.slice(0, 500) + '...' : systemPrompt;
 
     // Calculate context stats
     const lines = ctx ? ctx.split('\n').length : 0;
@@ -270,7 +273,7 @@ export class RLM {
       `  Output: $${result.cost.pricing.outputPer1M.toFixed(2)}`,
       '',
       '--- Available Sandbox Functions ---',
-      ...result.sandboxFunctions.map(f => `  ${f}`),
+      ...result.sandboxFunctions.map((f) => `  ${f}`),
       '',
       '--- System Prompt Preview ---',
       result.systemPromptPreview,

@@ -104,10 +104,7 @@ export function getExtensionForMediaType(mediaType: ImageMediaType): string {
  * console.log(`Loaded ${info.mediaType}, ${info.size} bytes`);
  * ```
  */
-export async function loadImage(
-  path: string,
-  options: ImageLoadOptions = {}
-): Promise<ImageInfo> {
+export async function loadImage(path: string, options: ImageLoadOptions = {}): Promise<ImageInfo> {
   const { maxSize = DEFAULT_MAX_SIZE } = options;
 
   // Detect media type from extension
@@ -115,7 +112,7 @@ export async function loadImage(
   if (!mediaType) {
     throw new Error(
       `Unsupported image format: ${extname(path)}. ` +
-      `Supported formats: ${Object.keys(EXTENSION_TO_MIME).join(', ')}`
+        `Supported formats: ${Object.keys(EXTENSION_TO_MIME).join(', ')}`
     );
   }
 
@@ -126,7 +123,7 @@ export async function loadImage(
   if (buffer.length > maxSize) {
     throw new Error(
       `Image file too large: ${buffer.length} bytes. ` +
-      `Maximum allowed: ${maxSize} bytes (${Math.round(maxSize / 1024 / 1024)}MB)`
+        `Maximum allowed: ${maxSize} bytes (${Math.round(maxSize / 1024 / 1024)}MB)`
     );
   }
 
@@ -279,7 +276,7 @@ export function estimateImageTokens(
   const totalTiles = tilesPerSide * tilesPerSide;
 
   // 85 base tokens + 170 per tile
-  return 85 + (totalTiles * 170);
+  return 85 + totalTiles * 170;
 }
 
 /**
@@ -290,9 +287,7 @@ export function estimateImageTokens(
  * @param content - ImageContent to validate
  * @returns Validation result with any errors
  */
-export function validateImageContent(
-  content: ImageContent
-): { valid: boolean; errors: string[] } {
+export function validateImageContent(content: ImageContent): { valid: boolean; errors: string[] } {
   const errors: string[] = [];
 
   if (content.type !== 'image') {
@@ -349,14 +344,12 @@ export function validateImageContent(
  * @returns Human-readable summary string
  */
 export function summarizeImageContent(content: ImageContent): string {
-  const source = content.source.type === 'url'
-    ? `URL: ${content.source.url}`
-    : `base64 (${Math.round((content.source.data?.length ?? 0) / 1024)}KB)`;
+  const source =
+    content.source.type === 'url'
+      ? `URL: ${content.source.url}`
+      : `base64 (${Math.round((content.source.data?.length ?? 0) / 1024)}KB)`;
 
-  const parts = [
-    content.source.mediaType,
-    source,
-  ];
+  const parts = [content.source.mediaType, source];
 
   if (content.detail) {
     parts.push(`detail: ${content.detail}`);

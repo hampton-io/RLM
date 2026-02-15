@@ -48,12 +48,7 @@ export interface ToolParameter {
 /**
  * Tool categories for organization.
  */
-export type ToolCategory =
-  | 'data'
-  | 'text'
-  | 'network'
-  | 'utility'
-  | 'custom';
+export type ToolCategory = 'data' | 'text' | 'network' | 'utility' | 'custom';
 
 /**
  * Options for the safeFetch tool.
@@ -110,7 +105,12 @@ export const parseJSONTool: SandboxTool = {
   category: 'data',
   parameters: [
     { name: 'text', type: 'string', description: 'JSON string to parse', required: true },
-    { name: 'defaultValue', type: 'any', description: 'Value to return on parse error', required: false },
+    {
+      name: 'defaultValue',
+      type: 'any',
+      description: 'Value to return on parse error',
+      required: false,
+    },
   ],
   example: 'parseJSON(\'{"name": "John"}\') // { name: "John" }',
   fn: (text: unknown, defaultValue: unknown = null): unknown => {
@@ -134,7 +134,12 @@ export const parseCSVTool: SandboxTool = {
   category: 'data',
   parameters: [
     { name: 'text', type: 'string', description: 'CSV text to parse', required: true },
-    { name: 'options', type: 'object', description: 'Parse options (delimiter, headers, skipEmpty)', required: false },
+    {
+      name: 'options',
+      type: 'object',
+      description: 'Parse options (delimiter, headers, skipEmpty)',
+      required: false,
+    },
   ],
   example: 'parseCSV("name,age\\nJohn,30") // [{ name: "John", age: "30" }]',
   fn: (text: unknown, options?: unknown): unknown[] => {
@@ -222,9 +227,15 @@ export const formatTableTool: SandboxTool = {
   category: 'data',
   parameters: [
     { name: 'data', type: 'array', description: 'Array of objects to format', required: true },
-    { name: 'columns', type: 'array', description: 'Column names to include (optional, defaults to all keys)', required: false },
+    {
+      name: 'columns',
+      type: 'array',
+      description: 'Column names to include (optional, defaults to all keys)',
+      required: false,
+    },
   ],
-  example: 'formatTable([{ name: "John", age: 30 }]) // "| name | age |\\n|------|-----|\\n| John | 30  |"',
+  example:
+    'formatTable([{ name: "John", age: 30 }]) // "| name | age |\\n|------|-----|\\n| John | 30  |"',
   fn: (data: unknown, columns?: unknown): string => {
     if (!Array.isArray(data) || data.length === 0) {
       return '';
@@ -280,11 +291,17 @@ export const formatTableTool: SandboxTool = {
  */
 export const dedupeTool: SandboxTool = {
   name: 'dedupe',
-  description: 'Remove duplicate values from an array. For objects, optionally specify a key to compare.',
+  description:
+    'Remove duplicate values from an array. For objects, optionally specify a key to compare.',
   category: 'utility',
   parameters: [
     { name: 'array', type: 'array', description: 'Array to deduplicate', required: true },
-    { name: 'key', type: 'string', description: 'Object key to use for comparison (optional)', required: false },
+    {
+      name: 'key',
+      type: 'string',
+      description: 'Object key to use for comparison (optional)',
+      required: false,
+    },
   ],
   example: 'dedupe([1, 2, 2, 3]) // [1, 2, 3]',
   fn: (array: unknown, key?: unknown): unknown[] => {
@@ -330,8 +347,18 @@ export const sortTool: SandboxTool = {
   category: 'utility',
   parameters: [
     { name: 'array', type: 'array', description: 'Array to sort', required: true },
-    { name: 'key', type: 'string', description: 'Object key to sort by (optional)', required: false },
-    { name: 'descending', type: 'boolean', description: 'Sort in descending order (default: false)', required: false },
+    {
+      name: 'key',
+      type: 'string',
+      description: 'Object key to sort by (optional)',
+      required: false,
+    },
+    {
+      name: 'descending',
+      type: 'boolean',
+      description: 'Sort in descending order (default: false)',
+      required: false,
+    },
   ],
   example: 'sort([3, 1, 2]) // [1, 2, 3]',
   fn: (array: unknown, key?: unknown, descending?: unknown): unknown[] => {
@@ -410,7 +437,12 @@ export const flattenTool: SandboxTool = {
   category: 'utility',
   parameters: [
     { name: 'array', type: 'array', description: 'Array to flatten', required: true },
-    { name: 'depth', type: 'number', description: 'Depth to flatten (default: 1)', required: false },
+    {
+      name: 'depth',
+      type: 'number',
+      description: 'Depth to flatten (default: 1)',
+      required: false,
+    },
   ],
   example: 'flatten([[1, 2], [3, [4]]]) // [1, 2, 3, [4]]',
   fn: (array: unknown, depth?: unknown): unknown[] => {
@@ -523,7 +555,12 @@ export const countByTool: SandboxTool = {
   category: 'utility',
   parameters: [
     { name: 'array', type: 'array', description: 'Array to count', required: true },
-    { name: 'key', type: 'string', description: 'Object key to count by (optional)', required: false },
+    {
+      name: 'key',
+      type: 'string',
+      description: 'Object key to count by (optional)',
+      required: false,
+    },
   ],
   example: 'countBy(["a", "b", "a"]) // { a: 2, b: 1 }',
   fn: (array: unknown, key?: unknown): Record<string, number> => {
@@ -556,10 +593,18 @@ export const summarizeTool: SandboxTool = {
   category: 'data',
   parameters: [
     { name: 'array', type: 'array', description: 'Array of numbers or objects', required: true },
-    { name: 'key', type: 'string', description: 'Object key for numeric value (optional)', required: false },
+    {
+      name: 'key',
+      type: 'string',
+      description: 'Object key for numeric value (optional)',
+      required: false,
+    },
   ],
   example: 'summarize([1, 2, 3, 4, 5]) // { sum: 15, avg: 3, min: 1, max: 5, count: 5 }',
-  fn: (array: unknown, key?: unknown): { sum: number; avg: number; min: number; max: number; count: number } | null => {
+  fn: (
+    array: unknown,
+    key?: unknown
+  ): { sum: number; avg: number; min: number; max: number; count: number } | null => {
     if (!Array.isArray(array) || array.length === 0) {
       return null;
     }
@@ -599,7 +644,12 @@ export const extractBetweenTool: SandboxTool = {
     { name: 'text', type: 'string', description: 'Text to search', required: true },
     { name: 'start', type: 'string', description: 'Start marker', required: true },
     { name: 'end', type: 'string', description: 'End marker', required: true },
-    { name: 'includeMarkers', type: 'boolean', description: 'Include markers in result (default: false)', required: false },
+    {
+      name: 'includeMarkers',
+      type: 'boolean',
+      description: 'Include markers in result (default: false)',
+      required: false,
+    },
   ],
   example: 'extractBetween("<tag>content</tag>", "<tag>", "</tag>") // ["content"]',
   fn: (text: unknown, start: unknown, end: unknown, includeMarkers?: unknown): string[] => {
@@ -642,7 +692,12 @@ export const truncateTool: SandboxTool = {
   parameters: [
     { name: 'text', type: 'string', description: 'Text to truncate', required: true },
     { name: 'maxLength', type: 'number', description: 'Maximum length', required: true },
-    { name: 'suffix', type: 'string', description: 'Suffix to add if truncated (default: "...")', required: false },
+    {
+      name: 'suffix',
+      type: 'string',
+      description: 'Suffix to add if truncated (default: "...")',
+      required: false,
+    },
   ],
   example: 'truncate("Hello World", 8) // "Hello..."',
   fn: (text: unknown, maxLength: unknown, suffix?: unknown): string => {
@@ -667,16 +722,17 @@ export const textStatsTool: SandboxTool = {
   name: 'textStats',
   description: 'Get statistics about text (word count, line count, char count).',
   category: 'text',
-  parameters: [
-    { name: 'text', type: 'string', description: 'Text to analyze', required: true },
-  ],
+  parameters: [{ name: 'text', type: 'string', description: 'Text to analyze', required: true }],
   example: 'textStats("Hello World") // { chars: 11, words: 2, lines: 1, sentences: 0 }',
   fn: (text: unknown): { chars: number; words: number; lines: number; sentences: number } => {
     if (typeof text !== 'string') {
       return { chars: 0, words: 0, lines: 0, sentences: 0 };
     }
 
-    const words = text.trim().split(/\s+/).filter((w) => w.length > 0);
+    const words = text
+      .trim()
+      .split(/\s+/)
+      .filter((w) => w.length > 0);
     const lines = text.split('\n');
     const sentences = text.split(/[.!?]+/).filter((s) => s.trim().length > 0);
 

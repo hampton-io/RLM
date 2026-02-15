@@ -29,12 +29,17 @@ export class GoogleEmbeddingClient implements EmbeddingClient {
 
   private client: GoogleGenAI;
 
-  constructor(model: GoogleEmbeddingModel = 'text-embedding-004', config: EmbeddingClientConfig = {}) {
+  constructor(
+    model: GoogleEmbeddingModel = 'text-embedding-004',
+    config: EmbeddingClientConfig = {}
+  ) {
     this.model = model;
 
     const apiKey = config.apiKey || process.env.GOOGLE_API_KEY || process.env.GEMINI_API_KEY;
     if (!apiKey) {
-      throw new Error('Google API key is required. Set GOOGLE_API_KEY or GEMINI_API_KEY environment variable or pass apiKey in config.');
+      throw new Error(
+        'Google API key is required. Set GOOGLE_API_KEY or GEMINI_API_KEY environment variable or pass apiKey in config.'
+      );
     }
 
     this.client = new GoogleGenAI({ apiKey });
@@ -79,9 +84,7 @@ export class GoogleEmbeddingClient implements EmbeddingClient {
 
     for (let i = 0; i < texts.length; i += CONCURRENCY) {
       const batch = texts.slice(i, i + CONCURRENCY);
-      const results = await Promise.all(
-        batch.map((text) => this.embed(text))
-      );
+      const results = await Promise.all(batch.map((text) => this.embed(text)));
 
       results.forEach((result, j) => {
         embeddings[i + j] = result.embedding;

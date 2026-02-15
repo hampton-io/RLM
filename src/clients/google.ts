@@ -29,7 +29,9 @@ export class GoogleClient extends BaseLLMClient {
 
     const apiKey = config.apiKey || process.env.GOOGLE_API_KEY || process.env.GEMINI_API_KEY;
     if (!apiKey) {
-      throw new Error('Google API key is required. Set GOOGLE_API_KEY or GEMINI_API_KEY environment variable or pass apiKey in config.');
+      throw new Error(
+        'Google API key is required. Set GOOGLE_API_KEY or GEMINI_API_KEY environment variable or pass apiKey in config.'
+      );
     }
 
     this.client = new GoogleGenAI({ apiKey });
@@ -38,7 +40,10 @@ export class GoogleClient extends BaseLLMClient {
   /**
    * Generate a completion using Google's Gemini API.
    */
-  async completion(messages: Message[], options: CompletionOptions = {}): Promise<CompletionResult> {
+  async completion(
+    messages: Message[],
+    options: CompletionOptions = {}
+  ): Promise<CompletionResult> {
     return this.withRetry(async () => {
       // Extract system message if present
       const systemMessage = messages.find((m) => m.role === 'system');
@@ -51,7 +56,9 @@ export class GoogleClient extends BaseLLMClient {
         model: this.model,
         contents,
         config: {
-          systemInstruction: systemMessage ? this.convertSystemContent(systemMessage.content) : undefined,
+          systemInstruction: systemMessage
+            ? this.convertSystemContent(systemMessage.content)
+            : undefined,
           maxOutputTokens: options.maxTokens,
           temperature: options.temperature ?? 0,
           stopSequences: options.stopSequences,
@@ -95,7 +102,9 @@ export class GoogleClient extends BaseLLMClient {
       model: this.model,
       contents,
       config: {
-        systemInstruction: systemMessage ? this.convertSystemContent(systemMessage.content) : undefined,
+        systemInstruction: systemMessage
+          ? this.convertSystemContent(systemMessage.content)
+          : undefined,
         maxOutputTokens: options.maxTokens,
         temperature: options.temperature ?? 0,
         stopSequences: options.stopSequences,
@@ -177,9 +186,15 @@ export class GoogleClient extends BaseLLMClient {
    * Convert messages to Gemini format.
    * Gemini uses 'user' and 'model' roles, not 'assistant'.
    */
-  private convertMessages(messages: Message[]): string | Array<{ role: string; parts: GeminiPart[] }> {
+  private convertMessages(
+    messages: Message[]
+  ): string | Array<{ role: string; parts: GeminiPart[] }> {
     // If there's only one user message with simple string content, use a simple string
-    if (messages.length === 1 && messages[0].role === 'user' && !isMultimodalContent(messages[0].content)) {
+    if (
+      messages.length === 1 &&
+      messages[0].role === 'user' &&
+      !isMultimodalContent(messages[0].content)
+    ) {
       return messages[0].content;
     }
 
@@ -193,9 +208,7 @@ export class GoogleClient extends BaseLLMClient {
   /**
    * Map Gemini finish reason to our standard format.
    */
-  private mapFinishReason(
-    reason: string | null | undefined
-  ): CompletionResult['finishReason'] {
+  private mapFinishReason(reason: string | null | undefined): CompletionResult['finishReason'] {
     switch (reason) {
       case 'STOP':
         return 'stop';

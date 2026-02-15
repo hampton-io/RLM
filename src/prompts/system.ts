@@ -302,10 +302,7 @@ export function createMultimodalUserPrompt(
   }
 
   // Return multimodal content with image first, then text
-  const content: (TextContent | ImageContent)[] = [
-    image,
-    { type: 'text', text: textPrompt },
-  ];
+  const content: (TextContent | ImageContent)[] = [image, { type: 'text', text: textPrompt }];
 
   return content;
 }

@@ -5,13 +5,13 @@ import { resolve } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { RLM } from './rlm.js';
 import { hasValidCredentials, getConfigSummary, resolveConfig } from './config.js';
-import { estimateTotalCost, formatCostEstimate, compareCosts, createImageContent } from './utils/index.js';
 import {
-  render,
-  getTemplateHelp,
-  parseTemplateVars,
-  listTemplateIds,
-} from './templates/index.js';
+  estimateTotalCost,
+  formatCostEstimate,
+  compareCosts,
+  createImageContent,
+} from './utils/index.js';
+import { render, getTemplateHelp, parseTemplateVars, listTemplateIds } from './templates/index.js';
 import { SessionManager, createSession, completeSession, failSession } from './session.js';
 import { metricsCollector } from './metrics/index.js';
 import type { SupportedModel, ImageContent } from './types.js';
@@ -89,7 +89,9 @@ function parseArgs(args: string[]): CLIOptions {
     } else if (arg === '--chunk-strategy') {
       const strategy = args[++i];
       if (!['fixed', 'semantic', 'sentence', 'paragraph'].includes(strategy)) {
-        console.error(`Error: Invalid chunk strategy "${strategy}". Must be: fixed, semantic, sentence, paragraph`);
+        console.error(
+          `Error: Invalid chunk strategy "${strategy}". Must be: fixed, semantic, sentence, paragraph`
+        );
         process.exit(1);
       }
       options.chunkStrategy = strategy as ChunkStrategy;
@@ -476,7 +478,9 @@ async function main(): Promise<void> {
             }
             break;
           case 'code_output':
-            console.log(`[OUTPUT] ${event.data.output.slice(0, 200)}${event.data.output.length > 200 ? '...' : ''}`);
+            console.log(
+              `[OUTPUT] ${event.data.output.slice(0, 200)}${event.data.output.length > 200 ? '...' : ''}`
+            );
             if (event.data.error) {
               console.log(`[ERROR] ${event.data.error}`);
             }
@@ -535,8 +539,16 @@ async function main(): Promise<void> {
     // Save failed session if session tracking is enabled
     if (sessionId) {
       try {
-        const session = createSession(query, context, { model, maxIterations: options.maxIterations }, { id: sessionId });
-        const failedSession = failSession(session, error instanceof Error ? error : new Error(String(error)));
+        const session = createSession(
+          query,
+          context,
+          { model, maxIterations: options.maxIterations },
+          { id: sessionId }
+        );
+        const failedSession = failSession(
+          session,
+          error instanceof Error ? error : new Error(String(error))
+        );
         await sessionManager.save(failedSession);
         console.error(`Session saved (failed): ${sessionId}`);
       } catch {

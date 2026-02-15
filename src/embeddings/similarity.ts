@@ -183,11 +183,7 @@ export class MemoryVectorStore implements VectorStore {
    * Search for similar chunks using cosine similarity.
    */
   search(embedding: number[], options: SimilaritySearchOptions = {}): SimilarityResult[] {
-    const {
-      topK = 5,
-      minScore = 0,
-      includeText = true,
-    } = options;
+    const { topK = 5, minScore = 0, includeText = true } = options;
 
     if (embedding.length !== this.dimensions && this.dimensions > 0) {
       throw new Error(
@@ -276,10 +272,7 @@ export function findSimilarChunks(
  * @param chunks - Chunks to rerank (must have embeddings)
  * @returns Chunks sorted by similarity (most similar first)
  */
-export function rerankBySimilarity(
-  queryEmbedding: number[],
-  chunks: TextChunk[]
-): TextChunk[] {
+export function rerankBySimilarity(queryEmbedding: number[], chunks: TextChunk[]): TextChunk[] {
   const results = findSimilarChunks(queryEmbedding, chunks, {
     topK: chunks.length,
     minScore: -1, // Include all

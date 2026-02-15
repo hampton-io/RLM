@@ -13,9 +13,7 @@ export type OpenAIEmbeddingModel =
   | 'text-embedding-ada-002';
 
 /** Google embedding models */
-export type GoogleEmbeddingModel =
-  | 'text-embedding-004'
-  | 'text-embedding-005';
+export type GoogleEmbeddingModel = 'text-embedding-004' | 'text-embedding-005';
 
 /** All supported embedding models */
 export type EmbeddingModel = OpenAIEmbeddingModel | GoogleEmbeddingModel;

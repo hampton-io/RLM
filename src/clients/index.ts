@@ -1,4 +1,10 @@
-import type { SupportedModel, ModelProvider, OpenAIModel, AnthropicModel, GoogleModel } from '../types.js';
+import type {
+  SupportedModel,
+  ModelProvider,
+  OpenAIModel,
+  AnthropicModel,
+  GoogleModel,
+} from '../types.js';
 import type { LLMClient, LLMClientConfig } from './types.js';
 import { detectProvider } from './types.js';
 import { OpenAIClient } from './openai.js';

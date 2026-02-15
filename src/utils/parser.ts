@@ -9,17 +9,20 @@ const CODE_BLOCK_REGEX = /```(?:javascript|js|typescript|ts)?\n([\s\S]*?)```/g;
  * Find a balanced FINAL() or FINAL_VAR() call, handling nested parentheses.
  * Returns the full match and the inner content.
  */
-function findBalancedFinalCall(text: string, funcName: 'FINAL' | 'FINAL_VAR'): { match: string; content: string; index: number } | null {
+function findBalancedFinalCall(
+  text: string,
+  funcName: 'FINAL' | 'FINAL_VAR'
+): { match: string; content: string; index: number } | null {
   const startRegex = new RegExp(`${funcName}\\s*\\(`);
   const startMatch = text.match(startRegex);
   if (!startMatch || startMatch.index === undefined) return null;
 
   const startIndex = startMatch.index;
   const parenStart = startIndex + startMatch[0].length - 1; // Position of opening (
-  
+
   let depth = 1;
   let i = parenStart + 1;
-  
+
   while (i < text.length && depth > 0) {
     const char = text[i];
     if (char === '(') depth++;
@@ -40,7 +43,7 @@ function findBalancedFinalCall(text: string, funcName: 'FINAL' | 'FINAL_VAR'): {
 
   const fullMatch = text.slice(startIndex, i);
   const content = text.slice(parenStart + 1, i - 1).trim();
-  
+
   return { match: fullMatch, content, index: startIndex };
 }
 
@@ -91,12 +94,12 @@ export function parseLLMOutput(output: string): ParsedLLMOutput {
     if (quoteMatch) {
       value = quoteMatch[1];
     }
-    
+
     result.final = {
       type: 'FINAL',
       value: value.trim(),
     };
-    
+
     // Only remove FINAL() from code if it's NOT inside a code block
     // When FINAL() is inside a code block, it should be left for the sandbox to execute
     if (result.code) {
@@ -115,12 +118,12 @@ export function parseLLMOutput(output: string): ParsedLLMOutput {
     if (quoteMatch) {
       value = quoteMatch[1];
     }
-    
+
     result.final = {
       type: 'FINAL_VAR',
       value: value.trim(),
     };
-    
+
     // Only remove FINAL_VAR() from code if it's NOT inside a code block
     if (result.code) {
       if (!isInsideCodeBlock(output, finalVarCall.index)) {
@@ -146,8 +149,10 @@ export function parseLLMOutput(output: string): ParsedLLMOutput {
  * Check if output contains a final answer.
  */
 export function hasFinalAnswer(output: string): boolean {
-  return findBalancedFinalCall(output, 'FINAL') !== null || 
-         findBalancedFinalCall(output, 'FINAL_VAR') !== null;
+  return (
+    findBalancedFinalCall(output, 'FINAL') !== null ||
+    findBalancedFinalCall(output, 'FINAL_VAR') !== null
+  );
 }
 
 /**

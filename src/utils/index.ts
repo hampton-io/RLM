@@ -28,11 +28,7 @@ export {
   compareCosts,
   getCheapestModel,
 } from './tokens.js';
-export type {
-  TokenEstimate,
-  CostEstimate,
-  EstimateOptions,
-} from './tokens.js';
+export type { TokenEstimate, CostEstimate, EstimateOptions } from './tokens.js';
 
 export {
   RLMError,

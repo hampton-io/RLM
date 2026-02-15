@@ -9,8 +9,10 @@ const ERROR_SUGGESTIONS: Record<RLMErrorCode, string> = {
   SANDBOX_TIMEOUT: 'Try increasing the sandboxTimeout option, or simplify your code to run faster.',
   SANDBOX_ERROR: 'Check your JavaScript code for syntax errors or invalid operations.',
   LLM_ERROR: 'Check your API key and network connection. If the issue persists, try again later.',
-  MAX_ITERATIONS: 'The LLM may be stuck in a loop. Try rephrasing your query or increasing maxIterations.',
-  MAX_DEPTH: 'Your query requires too many nested sub-queries. Try simplifying the task or increasing maxDepth.',
+  MAX_ITERATIONS:
+    'The LLM may be stuck in a loop. Try rephrasing your query or increasing maxIterations.',
+  MAX_DEPTH:
+    'Your query requires too many nested sub-queries. Try simplifying the task or increasing maxDepth.',
   PARSE_ERROR: 'The LLM response was malformed. Try rephrasing your query.',
   INVALID_CONFIG: 'Check your configuration options for typos or invalid values.',
 };
@@ -63,15 +65,23 @@ function classifyLLMError(message: string): string {
     return 'You are being rate limited. Wait a moment before retrying, or use the ResilientClient with retry options.';
   }
 
-  if (lower.includes('unauthorized') || lower.includes('invalid api key') || lower.includes('401')) {
+  if (
+    lower.includes('unauthorized') ||
+    lower.includes('invalid api key') ||
+    lower.includes('401')
+  ) {
     return 'Your API key is invalid or missing. Check that OPENAI_API_KEY or ANTHROPIC_API_KEY is set correctly.';
   }
 
   if (lower.includes('insufficient') || lower.includes('quota') || lower.includes('billing')) {
-    return 'Your API account may have insufficient credits. Check your billing status at the provider\'s dashboard.';
+    return "Your API account may have insufficient credits. Check your billing status at the provider's dashboard.";
   }
 
-  if (lower.includes('context length') || lower.includes('token limit') || lower.includes('too long')) {
+  if (
+    lower.includes('context length') ||
+    lower.includes('token limit') ||
+    lower.includes('too long')
+  ) {
     return 'The input is too long. RLM should handle this, but try reducing context size or using a model with larger context window.';
   }
 
@@ -79,7 +89,12 @@ function classifyLLMError(message: string): string {
     return 'The API request timed out. Try again or check your network connection.';
   }
 
-  if (lower.includes('500') || lower.includes('502') || lower.includes('503') || lower.includes('server error')) {
+  if (
+    lower.includes('500') ||
+    lower.includes('502') ||
+    lower.includes('503') ||
+    lower.includes('server error')
+  ) {
     return 'The API server is experiencing issues. This is temporary - please try again in a few moments.';
   }
 
@@ -96,7 +111,8 @@ function classifyLLMError(message: string): string {
 export function maxIterationsError(iterations: number): RLMError {
   const message = `Maximum iterations (${iterations}) reached without producing a final answer`;
   const error = new RLMError(message, 'MAX_ITERATIONS');
-  error.suggestion = `The LLM ran for ${iterations} iterations without finding an answer. ` +
+  error.suggestion =
+    `The LLM ran for ${iterations} iterations without finding an answer. ` +
     'Try: (1) rephrasing your query to be more specific, ' +
     '(2) increasing maxIterations if the task genuinely requires more steps, ' +
     '(3) providing clearer context, or ' +
@@ -110,7 +126,8 @@ export function maxIterationsError(iterations: number): RLMError {
 export function maxDepthError(depth: number): RLMError {
   const message = `Maximum recursion depth (${depth}) exceeded`;
   const error = new RLMError(message, 'MAX_DEPTH');
-  error.suggestion = `Your query triggered too many nested llm_query() calls (max depth: ${depth}). ` +
+  error.suggestion =
+    `Your query triggered too many nested llm_query() calls (max depth: ${depth}). ` +
     'Try: (1) simplifying your query to require fewer sub-queries, ' +
     '(2) increasing maxDepth if deep recursion is necessary, or ' +
     '(3) restructuring the task to use llm_query_parallel() instead of nested calls.';
@@ -123,7 +140,8 @@ export function maxDepthError(depth: number): RLMError {
 export function parseError(message: string): RLMError {
   const fullMessage = `Failed to parse LLM output: ${message}`;
   const error = new RLMError(fullMessage, 'PARSE_ERROR');
-  error.suggestion = 'The LLM produced output that could not be parsed. ' +
+  error.suggestion =
+    'The LLM produced output that could not be parsed. ' +
     'This usually resolves on retry. If it persists, try using a different model.';
   return error;
 }
@@ -134,7 +152,8 @@ export function parseError(message: string): RLMError {
 export function invalidConfigError(message: string): RLMError {
   const fullMessage = `Invalid configuration: ${message}`;
   const error = new RLMError(fullMessage, 'INVALID_CONFIG');
-  error.suggestion = 'Review your RLM configuration options. Common issues: ' +
+  error.suggestion =
+    'Review your RLM configuration options. Common issues: ' +
     'missing API key, invalid model name, negative numeric values, or temperature outside 0-2 range.';
   return error;
 }
@@ -177,9 +196,7 @@ export function wrapError(error: unknown, defaultCode: RLMErrorCode = 'LLM_ERROR
  */
 export function formatError(error: unknown): string {
   if (isRLMError(error)) {
-    const lines = [
-      `Error [${error.code}]: ${error.message}`,
-    ];
+    const lines = [`Error [${error.code}]: ${error.message}`];
 
     if (error.suggestion) {
       lines.push('');
@@ -206,13 +223,15 @@ export function formatError(error: unknown): string {
  */
 export function missingApiKeyError(provider: 'openai' | 'anthropic'): RLMError {
   const envVar = provider === 'openai' ? 'OPENAI_API_KEY' : 'ANTHROPIC_API_KEY';
-  const url = provider === 'openai'
-    ? 'https://platform.openai.com/api-keys'
-    : 'https://console.anthropic.com/';
+  const url =
+    provider === 'openai'
+      ? 'https://platform.openai.com/api-keys'
+      : 'https://console.anthropic.com/';
 
   const message = `Missing ${provider} API key`;
   const error = new RLMError(message, 'INVALID_CONFIG');
-  error.suggestion = `Set the ${envVar} environment variable with your API key. ` +
+  error.suggestion =
+    `Set the ${envVar} environment variable with your API key. ` +
     `You can get an API key from ${url}`;
   return error;
 }
@@ -223,7 +242,8 @@ export function missingApiKeyError(provider: 'openai' | 'anthropic'): RLMError {
 export function unsupportedModelError(model: string): RLMError {
   const message = `Unsupported model: ${model}`;
   const error = new RLMError(message, 'INVALID_CONFIG');
-  error.suggestion = 'Supported models include: ' +
+  error.suggestion =
+    'Supported models include: ' +
     'gpt-4o, gpt-4o-mini, gpt-4-turbo, gpt-3.5-turbo (OpenAI), ' +
     'claude-3-5-sonnet-latest, claude-3-5-haiku-latest, claude-3-opus-latest (Anthropic). ' +
     'Check for typos in the model name.';

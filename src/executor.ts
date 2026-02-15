@@ -10,11 +10,7 @@ import type { LLMClient } from './clients/types.js';
 import { createClient, calculateCost } from './clients/index.js';
 import { createSandbox } from './sandbox/index.js';
 import { getSystemPrompt, createUserPrompt, createMultimodalUserPrompt } from './prompts/index.js';
-import {
-  parseLLMOutput,
-  maxIterationsError,
-  wrapError,
-} from './utils/index.js';
+import { parseLLMOutput, maxIterationsError, wrapError } from './utils/index.js';
 import { RLMLogger } from './logger/index.js';
 import { CostTracker, BudgetExceededError, TokenLimitExceededError } from './cost-tracker.js';
 import { metricsCollector } from './metrics/collector.js';
@@ -22,7 +18,10 @@ import { metricsCollector } from './metrics/collector.js';
 /**
  * Default RLM options.
  */
-const DEFAULT_OPTIONS: Required<Omit<RLMOptions, 'apiKey' | 'provider' | 'extendedThinking' | 'image' | 'maxCost' | 'maxTokens'>> & Pick<RLMOptions, 'maxCost' | 'maxTokens'> = {
+const DEFAULT_OPTIONS: Required<
+  Omit<RLMOptions, 'apiKey' | 'provider' | 'extendedThinking' | 'image' | 'maxCost' | 'maxTokens'>
+> &
+  Pick<RLMOptions, 'maxCost' | 'maxTokens'> = {
   model: 'gpt-5.2',
   maxIterations: 20,
   maxDepth: 1,
@@ -37,7 +36,13 @@ const DEFAULT_OPTIONS: Required<Omit<RLMOptions, 'apiKey' | 'provider' | 'extend
  * RLM Executor - orchestrates the REPL-style execution loop.
  */
 export class RLMExecutor {
-  private options: Required<Omit<RLMOptions, 'apiKey' | 'provider' | 'extendedThinking' | 'image' | 'maxCost' | 'maxTokens'>> & Pick<RLMOptions, 'apiKey' | 'provider' | 'extendedThinking' | 'image' | 'maxCost' | 'maxTokens'>;
+  private options: Required<
+    Omit<RLMOptions, 'apiKey' | 'provider' | 'extendedThinking' | 'image' | 'maxCost' | 'maxTokens'>
+  > &
+    Pick<
+      RLMOptions,
+      'apiKey' | 'provider' | 'extendedThinking' | 'image' | 'maxCost' | 'maxTokens'
+    >;
   private client: LLMClient;
   private logger: RLMLogger;
   private costTracker: CostTracker;
@@ -150,19 +155,24 @@ export class RLMExecutor {
         // This catches cases like: FINAL(`Answer: ${myVar}`) where the function evaluates the template
         const sandboxFinalAnswer = sandbox.getVariable('__FINAL_ANSWER__');
         const sandboxFinalVarName = sandbox.getVariable('__FINAL_VAR_NAME__');
-        
+
         if (sandboxFinalAnswer !== undefined) {
           // FINAL() was called as a function with an evaluated value
           finalAnswer = this.stringify(sandboxFinalAnswer);
           this.logger.logFinalOutput(0, finalAnswer, 'FINAL', undefined);
           break;
         }
-        
+
         if (sandboxFinalVarName !== undefined) {
           // FINAL_VAR() was called as a function
           const varValue = sandbox.getVariable(String(sandboxFinalVarName));
           finalAnswer = this.stringify(varValue);
-          this.logger.logFinalOutput(0, finalAnswer ?? '', 'FINAL_VAR', String(sandboxFinalVarName));
+          this.logger.logFinalOutput(
+            0,
+            finalAnswer ?? '',
+            'FINAL_VAR',
+            String(sandboxFinalVarName)
+          );
           break;
         }
 
@@ -172,7 +182,7 @@ export class RLMExecutor {
             // Check if value looks like a bare variable name (no spaces, quotes, punctuation)
             // If so, try to resolve it as a variable first
             let value = parsed.final.value;
-            
+
             // Resolve template literals like ${varName} from sandbox variables
             // This handles cases where the model writes FINAL(`Answer: ${myVar}`) in text
             if (value.includes('${')) {
@@ -184,7 +194,7 @@ export class RLMExecutor {
                 return match; // Keep original if variable not found
               });
             }
-            
+
             if (/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(value)) {
               const varValue = sandbox.getVariable(value);
               if (varValue !== undefined) {
@@ -219,7 +229,8 @@ export class RLMExecutor {
           });
           messages.push({
             role: 'user',
-            content: 'Please write code to explore the context or provide your final answer using FINAL("answer").',
+            content:
+              'Please write code to explore the context or provide your final answer using FINAL("answer").',
           });
         }
       }
@@ -262,7 +273,7 @@ export class RLMExecutor {
       // Record failed metric
       const totalUsage = this.logger.getTotalUsage();
       const totalCost = calculateCost(this.options.model, totalUsage);
-      
+
       metricsCollector.record({
         query,
         contextBytes: context.length,
@@ -299,9 +310,7 @@ export class RLMExecutor {
       },
       onLLMQueryParallel: async (queries) => {
         const results = await Promise.all(
-          queries.map((q) =>
-            this.handleSubQuery(q.prompt, q.context ?? context, depth + 1)
-          )
+          queries.map((q) => this.handleSubQuery(q.prompt, q.context ?? context, depth + 1))
         );
         return results;
       },
@@ -311,11 +320,7 @@ export class RLMExecutor {
   /**
    * Handle a sub-LLM query from within the sandbox.
    */
-  private async handleSubQuery(
-    prompt: string,
-    subContext: string,
-    depth: number
-  ): Promise<string> {
+  private async handleSubQuery(prompt: string, subContext: string, depth: number): Promise<string> {
     if (depth > this.options.maxDepth) {
       return `[Error: Maximum recursion depth (${this.options.maxDepth}) exceeded]`;
     }
@@ -325,7 +330,8 @@ export class RLMExecutor {
       const messages: Message[] = [
         {
           role: 'system',
-          content: 'You are a helpful assistant. Answer the question based on the provided context. Be concise and direct.',
+          content:
+            'You are a helpful assistant. Answer the question based on the provided context. Be concise and direct.',
         },
         {
           role: 'user',

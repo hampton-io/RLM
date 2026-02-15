@@ -52,11 +52,7 @@ export class CostTracker {
     depth: number;
   }> = [];
 
-  constructor(options: {
-    model: string;
-    maxCost?: number;
-    maxTokens?: number;
-  }) {
+  constructor(options: { model: string; maxCost?: number; maxTokens?: number }) {
     this.model = options.model;
     this.maxCost = options.maxCost;
     this.maxTokens = options.maxTokens;
@@ -114,7 +110,8 @@ export class CostTracker {
   getRemainingBudget(): { cost?: number; tokens?: number } {
     return {
       cost: this.maxCost !== undefined ? Math.max(0, this.maxCost - this.totalCost) : undefined,
-      tokens: this.maxTokens !== undefined ? Math.max(0, this.maxTokens - this.totalTokens) : undefined,
+      tokens:
+        this.maxTokens !== undefined ? Math.max(0, this.maxTokens - this.totalTokens) : undefined,
     };
   }
 
@@ -129,7 +126,10 @@ export class CostTracker {
     completionTokens: number;
   } {
     const promptTokens = this.usageHistory.reduce((sum, h) => sum + h.usage.promptTokens, 0);
-    const completionTokens = this.usageHistory.reduce((sum, h) => sum + h.usage.completionTokens, 0);
+    const completionTokens = this.usageHistory.reduce(
+      (sum, h) => sum + h.usage.completionTokens,
+      0
+    );
 
     return {
       totalCost: this.totalCost,
@@ -177,14 +177,18 @@ export class CostTracker {
 
     if (this.maxTokens !== undefined) {
       const remaining = this.getRemainingBudget().tokens!;
-      lines.push(`Tokens Remaining: ${remaining.toLocaleString()} of ${this.maxTokens.toLocaleString()}`);
+      lines.push(
+        `Tokens Remaining: ${remaining.toLocaleString()} of ${this.maxTokens.toLocaleString()}`
+      );
     }
 
     const byDepth = this.getUsageByDepth();
     if (byDepth.size > 1) {
       lines.push('\nUsage by Depth:');
       for (const [depth, usage] of byDepth) {
-        lines.push(`  Depth ${depth}: ${usage.calls} calls, $${usage.cost.toFixed(4)}, ${usage.tokens.toLocaleString()} tokens`);
+        lines.push(
+          `  Depth ${depth}: ${usage.calls} calls, $${usage.cost.toFixed(4)}, ${usage.tokens.toLocaleString()} tokens`
+        );
       }
     }
 

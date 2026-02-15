@@ -162,12 +162,12 @@ export function getApiKey(provider: ModelProvider, explicitKey?: string): string
 export function resolveConfig(options: RLMConfigOptions): ResolvedConfig {
   // Load env config first, then override with explicit options
   const envConfig = loadEnvConfig();
-  
+
   // Filter out undefined values from options so they don't override defaults
   const filteredOptions = Object.fromEntries(
     Object.entries(options).filter(([_, v]) => v !== undefined)
   );
-  
+
   const merged = { ...DEFAULT_CONFIG, ...envConfig, ...filteredOptions };
 
   // Validate model

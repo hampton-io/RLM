@@ -4,8 +4,8 @@
  * Supports file-based persistence for sharing between processes
  */
 
-import { existsSync, readFileSync, writeFileSync, mkdirSync } from "node:fs";
-import { dirname } from "node:path";
+import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'node:fs';
+import { dirname } from 'node:path';
 
 export interface QueryMetric {
   id: string;
@@ -33,7 +33,7 @@ export interface MetricsConfig {
   storagePath?: string; // Path to JSON file for persistence
 }
 
-interface StoredMetric extends Omit<QueryMetric, "timestamp"> {
+interface StoredMetric extends Omit<QueryMetric, 'timestamp'> {
   timestamp: string; // ISO string for JSON serialization
 }
 
@@ -45,7 +45,7 @@ class MetricsCollector {
 
   configure(config: MetricsConfig): void {
     this.config = config;
-    
+
     // Load existing metrics from file if configured
     if (config.storagePath && !this.loaded) {
       this.loadFromFile();
@@ -61,9 +61,9 @@ class MetricsCollector {
     return this.config.apiKey;
   }
 
-  record(metric: Omit<QueryMetric, "id" | "timestamp">): QueryMetric {
+  record(metric: Omit<QueryMetric, 'id' | 'timestamp'>): QueryMetric {
     if (!this.config.enabled) {
-      return { ...metric, id: "", timestamp: new Date() };
+      return { ...metric, id: '', timestamp: new Date() };
     }
 
     // Reload from file to get latest (in case another process wrote)
@@ -80,7 +80,7 @@ class MetricsCollector {
     // Optionally redact query text
     if (this.config.redactQueries) {
       fullMetric.queryHash = this.hashQuery(fullMetric.query);
-      fullMetric.query = "[REDACTED]";
+      fullMetric.query = '[REDACTED]';
     }
 
     this.queries.unshift(fullMetric);
@@ -140,7 +140,7 @@ class MetricsCollector {
     return this.queries.find((q) => q.id === id);
   }
 
-  getStats(period: "hour" | "day" | "week" | "month" = "day"): {
+  getStats(period: 'hour' | 'day' | 'week' | 'month' = 'day'): {
     queries: number;
     cost: number;
     avgDuration: number;
@@ -185,7 +185,7 @@ class MetricsCollector {
   }
 
   getHealth(): {
-    status: "healthy" | "degraded" | "unhealthy";
+    status: 'healthy' | 'degraded' | 'unhealthy';
     uptime: number;
     activeQueries: number;
     lastQuery?: Date;
@@ -195,12 +195,12 @@ class MetricsCollector {
       this.loadFromFile();
     }
 
-    const stats = this.getStats("hour");
+    const stats = this.getStats('hour');
     const uptime = Date.now() - this.startTime.getTime();
 
-    let status: "healthy" | "degraded" | "unhealthy" = "healthy";
-    if (stats.errorRate > 0.1) status = "degraded";
-    if (stats.errorRate > 0.5) status = "unhealthy";
+    let status: 'healthy' | 'degraded' | 'unhealthy' = 'healthy';
+    if (stats.errorRate > 0.1) status = 'degraded';
+    if (stats.errorRate > 0.5) status = 'unhealthy';
 
     return {
       status,
@@ -223,7 +223,7 @@ class MetricsCollector {
 
     try {
       if (existsSync(this.config.storagePath)) {
-        const data = readFileSync(this.config.storagePath, "utf8");
+        const data = readFileSync(this.config.storagePath, 'utf8');
         const stored: StoredMetric[] = JSON.parse(data);
         this.queries = stored.map((m) => ({
           ...m,
@@ -231,7 +231,7 @@ class MetricsCollector {
         }));
       }
     } catch (error) {
-      console.error("Failed to load metrics from file:", error);
+      console.error('Failed to load metrics from file:', error);
     }
   }
 
@@ -251,7 +251,7 @@ class MetricsCollector {
       }));
       writeFileSync(this.config.storagePath, JSON.stringify(stored, null, 2));
     } catch (error) {
-      console.error("Failed to save metrics to file:", error);
+      console.error('Failed to save metrics to file:', error);
     }
   }
 
@@ -266,7 +266,7 @@ class MetricsCollector {
       hash = (hash << 5) - hash + char;
       hash = hash & hash;
     }
-    return Math.abs(hash).toString(16).padStart(8, "0");
+    return Math.abs(hash).toString(16).padStart(8, '0');
   }
 }
 

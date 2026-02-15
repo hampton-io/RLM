@@ -88,7 +88,9 @@ export function renderTemplate(
     if (varDef?.required) {
       missing.push(varName);
       if (strict) {
-        throw new Error(`Required variable "${varName}" not provided for template "${template.id}"`);
+        throw new Error(
+          `Required variable "${varName}" not provided for template "${template.id}"`
+        );
       }
     }
 
@@ -140,9 +142,7 @@ export function render(
 /**
  * Create a new template registry.
  */
-export function createTemplateRegistry(
-  includeBuiltins: boolean = true
-): TemplateRegistry {
+export function createTemplateRegistry(includeBuiltins: boolean = true): TemplateRegistry {
   const templates = new Map<string, PromptTemplate>();
 
   // Initialize with built-in templates
@@ -254,10 +254,7 @@ export function parseTemplateVars(varsString: string): Record<string, string> {
  * Create a quick template from a simple string.
  * Useful for one-off templates.
  */
-export function quickTemplate(
-  prompt: string,
-  variables?: Record<string, string>
-): string {
+export function quickTemplate(prompt: string, variables?: Record<string, string>): string {
   // Simple variable substitution
   let result = prompt;
 

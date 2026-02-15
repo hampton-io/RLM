@@ -79,7 +79,7 @@ export const MODEL_PRICING: Record<string, ModelPricing> = {
   // GPT-5.2 Series (latest flagship)
   'gpt-5.2': { inputPer1M: 5, outputPer1M: 15 },
   'gpt-5.2-codex': { inputPer1M: 2, outputPer1M: 8 },
-  
+
   // GPT-5.1 Series
   'gpt-5.1': { inputPer1M: 5, outputPer1M: 15 },
   'gpt-5.1-codex': { inputPer1M: 2, outputPer1M: 8 },
@@ -107,13 +107,13 @@ export const MODEL_PRICING: Record<string, ModelPricing> = {
   'o4-mini-deep-research': { inputPer1M: 2.5, outputPer1M: 10 },
 
   // o3 Reasoning Models
-  'o3': { inputPer1M: 2, outputPer1M: 8 },
+  o3: { inputPer1M: 2, outputPer1M: 8 },
   'o3-mini': { inputPer1M: 0.55, outputPer1M: 2.2 },
   'o3-pro': { inputPer1M: 20, outputPer1M: 80 },
   'o3-deep-research': { inputPer1M: 5, outputPer1M: 20 },
 
   // o1 Reasoning Models (deprecated)
-  'o1': { inputPer1M: 15, outputPer1M: 60 },
+  o1: { inputPer1M: 15, outputPer1M: 60 },
   'o1-mini': { inputPer1M: 3, outputPer1M: 12 },
   'o1-pro': { inputPer1M: 150, outputPer1M: 600 },
 
